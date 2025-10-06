@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/layout/navbar.jsx'
+import Home from "./pages/Home";
 import './App.css'
 
 function App() {
@@ -8,18 +9,9 @@ function App() {
 
   return (
     <>
-      <Navbar />
-      <main style={{ padding: '2rem', textAlign: 'center' }}>
-        <h1>Bienvenido a PressPlay 🎮</h1>
-        <p>Tu tienda de videojuegos favorita</p>
-      </main>
-
-      {/* Rutas mínimas (vacías por ahora) */}
+      <Navbar />    
       <Routes>
-        {/* Ejemplos futuros:
-        <Route path="/" element={<HomePage />} />
-        <Route path="/search" element={<SearchPage />} />
-        */}
+        <Route path="/" element={<Home />} />
       </Routes>
     </>
   )
