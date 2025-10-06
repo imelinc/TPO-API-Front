@@ -10,7 +10,7 @@ export default function HeroShowcase() {
             >
                 <div className="hero-cover__overlay">
                     <h1>Bienvenido a PressPlay</h1>
-                    <p>Tu tienda de videojuegos con ofertas y soporte de primera.</p>
+                    <p>El lugar donde los gamers encuentran los mejores títulos, ofertas y experiencias.</p>
                 </div>
             </article>
 
@@ -21,7 +21,7 @@ export default function HeroShowcase() {
                 >
                     <div className="promo-card__content">
                         <h3>¿Quiénes somos?</h3>
-                        <p>Amamos los videojuegos. Seleccionamos títulos que valen tu tiempo.</p>
+                        <p>Somos fanáticos de los videojuegos como vos. Creamos un espacio hecho por gamers, para gamers.</p>
                     </div>
                 </article>
 
@@ -30,8 +30,8 @@ export default function HeroShowcase() {
                     style={{ backgroundImage: 'url(/showcase/service.png)' }}
                 >
                     <div className="promo-card__content">
-                        <h3>Servicios</h3>
-                        <p>Soporte 24/7, reembolsos simples y bibliotecas en la nube.</p>
+                        <h3>Trabajamos con los mejores</h3>
+                        <p>Colaboramos con las desarrolladoras más grandes del mundo para ofrecerte lanzamientos oficiales y calidad garantizada.</p>
                     </div>
                 </article>
 
@@ -41,7 +41,7 @@ export default function HeroShowcase() {
                 >
                     <div className="promo-card__content">
                         <h3>Calidad garantizada</h3>
-                        <p>Juegos de la mejor calidad, sin vueltas.</p>
+                        <p>Cada juego que ves en PressPlay fue elegido por su rendimiento, soporte y experiencia de juego.</p>
                     </div>
                 </article>
             </div>
