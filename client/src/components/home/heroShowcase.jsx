@@ -3,7 +3,6 @@ import "../../styles/heroShowcase.css";
 export default function HeroShowcase() {
     return (
         <section className="showcase">
-            {/* Banner principal fijo */}
             <article
                 className="hero-cover"
                 style={{ backgroundImage: 'url(/showcase/hero.png)' }}
