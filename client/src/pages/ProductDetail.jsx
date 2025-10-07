@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getProducto } from "../api/products";
 import "../styles/productDetail.css";
@@ -9,6 +9,22 @@ export default function ProductDetail() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState("");
+
+    // Galería
+    const [activeIdx, setActiveIdx] = useState(0);
+
+    // Lightbox
+    const [isOpen, setIsOpen] = useState(false);
+    const openLightbox = (idx) => { setActiveIdx(idx); setIsOpen(true); };
+    const closeLightbox = () => setIsOpen(false);
+
+    const goPrev = useCallback(() => {
+        setActiveIdx((p) => (p - 1 + images.length) % images.length);
+    }, []); // images se define luego; usamos function scope en handlers
+
+    const goNext = useCallback(() => {
+        setActiveIdx((p) => (p + 1) % images.length);
+    }, []);
 
     useEffect(() => {
         let alive = true;
@@ -21,14 +37,37 @@ export default function ProductDetail() {
         return () => { alive = false; };
     }, [id]);
 
-    const imgPrincipal = useMemo(() => {
-        if (!data) return null;
-        const firstFromList =
-            Array.isArray(data.imagenes) && data.imagenes.length > 0
-                ? (data.imagenes[0].url || data.imagenes[0].imagenUrl)
-                : null;
-        return data.imagenUrl || firstFromList || "/promos/quality.jpg";
+    // Construyo el array de imágenes (principal + galerías), filtrando nulos y duplicados simples
+    const images = useMemo(() => {
+        if (!data) return [];
+        const fromList = (Array.isArray(data.imagenes) ? data.imagenes : [])
+            .map(im => im?.url || im?.imagenUrl)
+            .filter(Boolean);
+        const first = data.imagenUrl ? [data.imagenUrl] : [];
+        const all = [...first, ...fromList];
+        // dedup
+        return Array.from(new Set(all));
     }, [data]);
+
+    // Imagen principal visible
+    const imgPrincipal = images[activeIdx] || "/promos/quality.jpg";
+
+    // Accesibilidad teclado en lightbox
+    useEffect(() => {
+        if (!isOpen) return;
+        const onKey = (e) => {
+            if (e.key === "Escape") closeLightbox();
+            if (e.key === "ArrowLeft") goPrev();
+            if (e.key === "ArrowRight") goNext();
+        };
+        window.addEventListener("keydown", onKey);
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            window.removeEventListener("keydown", onKey);
+            document.body.style.overflow = prev;
+        };
+    }, [isOpen, goNext, goPrev]);
 
     const formatMoney = (n) => (typeof n === "number" ? `$${n.toFixed(2)}` : "$-");
 
@@ -50,36 +89,46 @@ export default function ProductDetail() {
             </div>
 
             <div className="pd-grid">
-                {/* Imagen principal y miniaturas */}
                 <div className="pd-media">
-                    <img className="pd-cover" src={imgPrincipal} alt={titulo} />
-                    {Array.isArray(data.imagenes) && data.imagenes.length > 1 && (
+                    <div
+                        className="pd-mainWrap"
+                        onClick={() => openLightbox(activeIdx)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && openLightbox(activeIdx)}
+                        aria-label="Abrir imagen en pantalla completa"
+                    >
+                        <img className="pd-cover" src={imgPrincipal} alt={titulo} />
+                    </div>
+
+                    {images.length > 1 && (
                         <div className="pd-thumbs">
-                            {data.imagenes.map((im, i) => {
-                                const url = im.url || im.imagenUrl;
-                                if (!url) return null;
-                                return <img key={i} src={url} alt={`${titulo} ${i + 1}`} className="pd-thumb" />;
-                            })}
+                            {images.map((url, i) => (
+                                <button
+                                    key={url + i}
+                                    className={`pd-thumbBtn ${i === activeIdx ? "is-active" : ""}`}
+                                    onClick={() => setActiveIdx(i)}
+                                    aria-label={`Ver imagen ${i + 1}`}
+                                >
+                                    <img src={url} alt={`${titulo} ${i + 1}`} />
+                                </button>
+                            ))}
                         </div>
                     )}
                 </div>
 
-                {/* Info */}
                 <div className="pd-info">
                     <h1 className="pd-title">{titulo}</h1>
 
                     <div className="pd-meta">
                         {categoriaNombre && <span className="pd-chip">Categoría: {categoriaNombre}</span>}
-
                         {typeof stock === "number" && (
                             <span className={`pd-chip ${sinStock ? "stock-out" : "stock-ok"}`}>
                                 {sinStock ? "Sin stock" : `Stock: ${stock}`}
                             </span>
                         )}
-
                         {vendedorNombre && <span className="pd-chip">Vendedor: {vendedorNombre}</span>}
                     </div>
-
 
                     <div className="pd-price">
                         {tieneDescuento && typeof precioConDescuento === "number" ? (
@@ -95,14 +144,47 @@ export default function ProductDetail() {
 
                     <p className="pd-desc">{descripcion}</p>
 
+                    {/* ACCIONES: mismo ancho, wishlist debajo y blanco */}
                     <div className="pd-actions">
                         <button className="btn-primary" disabled={sinStock} onClick={() => navigate("/cart")}>
                             {sinStock ? "Sin stock" : "Agregar al carrito"}
                         </button>
-                        <button className="btn-outline" onClick={() => navigate("/wishlist")}>Agregar a Wishlist</button>
+                        <button className="btn-outline" onClick={() => navigate("/wishlist")}>
+                            Agregar a Wishlist
+                        </button>
                     </div>
                 </div>
             </div>
+
+            {isOpen && (
+                <div className="lb-overlay" onClick={closeLightbox} aria-modal="true" role="dialog">
+                    <div className="lb-content" onClick={(e) => e.stopPropagation()}>
+                        <img className="lb-image" src={images[activeIdx]} alt={`${titulo} ampliada`} />
+                        {images.length > 1 && (
+                            <>
+                                <button className="lb-nav lb-prev" onClick={goPrev} aria-label="Imagen anterior">‹</button>
+                                <button className="lb-nav lb-next" onClick={goNext} aria-label="Imagen siguiente">›</button>
+                            </>
+                        )}
+                        <button className="lb-close" onClick={closeLightbox} aria-label="Cerrar">×</button>
+
+                        {images.length > 1 && (
+                            <div className="lb-strip">
+                                {images.map((src, idx) => (
+                                    <button
+                                        key={src + idx}
+                                        className={`lb-thumb ${idx === activeIdx ? "is-active" : ""}`}
+                                        onClick={() => setActiveIdx(idx)}
+                                        aria-label={`Ir a imagen ${idx + 1}`}
+                                    >
+                                        <img src={src} alt={`miniatura ${idx + 1}`} />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </section>
     );
 }
