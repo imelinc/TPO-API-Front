@@ -1,4 +1,3 @@
-// src/api/client.js
 export const API_URL = "http://localhost:8080"; // el back esta en este puerto
 
 export const AUTH = {
