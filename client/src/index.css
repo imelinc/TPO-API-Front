@@ -6,6 +6,9 @@
   --bg: #ffffff;
   --border: #eaeaea;
   --muted: #6b7280;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-light: #3b82f6;
 }
 
 * {

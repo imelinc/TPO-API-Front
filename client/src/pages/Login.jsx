@@ -39,7 +39,7 @@ export default function Login() {
 
             <div className="auth-right">
                 <div className="auth-card">
-                    <h2>Sign In</h2>
+                    <h2>Iniciá Sesión</h2>
                     <p className="auth-muted">Accedé con tu cuenta de PressPlay.</p>
 
                     {msg.text && <div className={`alert ${msg.type}`}>{msg.text}</div>}
@@ -65,13 +65,6 @@ export default function Login() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
                             />
-                        </div>
-
-                        <div className="row">
-                            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <input type="checkbox" /> Recordarme
-                            </label>
-                            <a href="#">¿Olvidaste tu contraseña?</a>
                         </div>
 
                         <button className="btn-primary" type="submit" disabled={loading}>

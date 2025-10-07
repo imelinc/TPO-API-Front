@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import "../../styles/navbar.css";
-import Logo from "../../assets/Logo-big";
+import Logo from "../../assets/Logo-big.png";
 
 export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
     const [q, setQ] = useState("");
@@ -86,7 +86,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                         <button
                             className="iconBtn"
                             aria-label={user ? "Cuenta" : "Iniciar sesión / Registrarse"}
-                            onClick={handleUserClick}
+                            onClick={() => (user ? setOpen((s) => !s) : navigate("/login"))}
                         >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path strokeWidth="2" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -96,8 +96,17 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
 
                         {user && open && (
                             <div className="user-menu" role="menu" aria-label="Menú de usuario">
-                                <div className="user-header">@{user.username}</div>
-                                <div className="user-item danger" onClick={handleLogout}>Cerrar sesión</div>
+                                <div
+                                    className="user-item danger"
+                                    onClick={async () => {
+                                        await logout();        
+                                        setOpen(false);           
+                                        window.alert("Sesión cerrada exitosamente.");
+                                        navigate("/");            
+                                    }}
+                                >
+                                    Cerrar sesión
+                                </div>
                             </div>
                         )}
                     </div>

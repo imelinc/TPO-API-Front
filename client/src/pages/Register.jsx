@@ -6,7 +6,7 @@ import "../styles/auth.css";
 const initial = {
     username: "", email: "", password: "",
     nombre: "", apellido: "", telefono: "", direccion: "",
-    rol: "",
+    rol: "COMPRADOR",
 };
 
 export default function Register() {
