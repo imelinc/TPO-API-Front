@@ -20,7 +20,7 @@ export default function ProductDetail() {
 
     const goPrev = useCallback(() => {
         setActiveIdx((p) => (p - 1 + images.length) % images.length);
-    }, []); // images se define luego; usamos function scope en handlers
+    }, []);
 
     const goNext = useCallback(() => {
         setActiveIdx((p) => (p + 1) % images.length);
@@ -37,7 +37,7 @@ export default function ProductDetail() {
         return () => { alive = false; };
     }, [id]);
 
-    // Construyo el array de imágenes (principal + galerías), filtrando nulos y duplicados simples
+    // lista de imagenes
     const images = useMemo(() => {
         if (!data) return [];
         const fromList = (Array.isArray(data.imagenes) ? data.imagenes : [])
@@ -50,24 +50,7 @@ export default function ProductDetail() {
     }, [data]);
 
     // Imagen principal visible
-    const imgPrincipal = images[activeIdx] || "/promos/quality.jpg";
-
-    // Accesibilidad teclado en lightbox
-    useEffect(() => {
-        if (!isOpen) return;
-        const onKey = (e) => {
-            if (e.key === "Escape") closeLightbox();
-            if (e.key === "ArrowLeft") goPrev();
-            if (e.key === "ArrowRight") goNext();
-        };
-        window.addEventListener("keydown", onKey);
-        const prev = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
-        return () => {
-            window.removeEventListener("keydown", onKey);
-            document.body.style.overflow = prev;
-        };
-    }, [isOpen, goNext, goPrev]);
+    const imgPrincipal = images[activeIdx];
 
     const formatMoney = (n) => (typeof n === "number" ? `$${n.toFixed(2)}` : "$-");
 
