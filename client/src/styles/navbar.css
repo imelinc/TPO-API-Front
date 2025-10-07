@@ -117,7 +117,6 @@
     padding: 0 5px;
     border-radius: 999px;
     background: #ef4444;
-    /* rojo */
     color: #fff;
     font-size: 11px;
     font-weight: 700;
@@ -135,4 +134,49 @@
     .search form {
         max-width: 100%;
     }
+}
+
+.user-menu-wrap {
+    position: relative;
+}
+
+.user-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 220px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+    padding: 8px;
+    z-index: 100;
+}
+
+.user-menu .user-header {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #111;
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.user-menu .user-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.user-menu .user-item:hover {
+    background: #f3f4f6;
+}
+
+.user-menu .danger {
+    color: #b91c1c;
 }
