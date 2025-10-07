@@ -1,20 +1,19 @@
-import { useState } from 'react'
-import { Routes, Route } from 'react-router-dom'
-import Navbar from './components/layout/navbar.jsx'
+import { Routes, Route } from "react-router-dom";
+import Navbar from "./components/layout/Navbar";
 import Home from "./pages/Home";
-import './App.css'
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+export default function App() {
   return (
     <>
-      <Navbar />    
+      <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
       </Routes>
     </>
-  )
+  );
 }
-
-export default App
