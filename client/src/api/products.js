@@ -21,3 +21,12 @@ export async function getProducto(id) {
     if (!res.ok) throw new Error("Producto no encontrado");
     return res.json();
 }
+
+export const getPublicos = ({ page = 0, size = 12 }) =>
+    fetch(`/productos-publicos?page=${page}&size=${size}`).then(r => r.json());
+
+export const getPorCategoria = ({ categoriaId, page = 0, size = 100 }) =>
+    fetch(`/productos-publicos/categoria/${categoriaId}?page=${page}&size=${size}`).then(r => r.json());
+
+export const buscarPorPrecio = ({ min, max, page = 0, size = 100 }) =>
+    fetch(`/productos-publicos/precio?precioMin=${min}&precioMax=${max}&page=${page}&size=${size}`).then(r => r.json());

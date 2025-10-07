@@ -1,6 +1,14 @@
 import "../../styles/heroShowcase.css";
 
 export default function HeroShowcase() {
+
+    const scrollToGames = () => {
+        const section = document.getElementById("games-section");
+        if (section) {
+            section.scrollIntoView({ behavior: "smooth" });
+        }
+    };
+
     return (
         <section className="showcase">
             <article
@@ -8,8 +16,13 @@ export default function HeroShowcase() {
                 style={{ backgroundImage: 'url(/showcase/hero.png)' }}
             >
                 <div className="hero-cover__overlay">
-                    <h1>Bienvenido a PressPlay</h1>
-                    <p>El lugar donde los gamers encuentran los mejores títulos, ofertas y experiencias.</p>
+                    <h1>Bienvenido a PressPlay™</h1>
+                    <p>
+                        El lugar donde los gamers encuentran los mejores títulos, ofertas y experiencias.
+                    </p>
+                    <button className="hero-btn" onClick={scrollToGames}>
+                        Conocé nuestro catálogo
+                    </button>
                 </div>
             </article>
 

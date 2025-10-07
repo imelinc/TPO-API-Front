@@ -44,7 +44,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                 {/* Izquierda */}
                 <div className="brand" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
                     <img src={Logo} alt="PressPlay logo" />
-                    <span className="brand__name">PressPlay</span>
+                    <span className="brand__name">PressPlay™</span>
                 </div>
 
                 {/* Centro */}

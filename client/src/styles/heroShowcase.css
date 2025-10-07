@@ -46,20 +46,6 @@
     opacity: .95;
 }
 
-.btn {
-    display: inline-block;
-    padding: 10px 16px;
-    border-radius: 10px;
-    background: #2563eb;
-    color: #fff;
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.btn:hover {
-    background: #1d4ed8;
-}
-
 .promo-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -124,4 +110,26 @@
     .promo-grid {
         grid-template-columns: 1fr;
     }
+}
+
+.hero-btn {
+    display: inline-block;
+    width: 100%;
+    max-width: 650px;
+    margin-right: auto;
+    text-align: left;
+    padding: 12px 28px;
+    background: linear-gradient(90deg, #296af7, #386dff);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hero-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.3);
 }
