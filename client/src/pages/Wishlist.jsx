@@ -1,0 +1,193 @@
+import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import {
+    getWishlist,
+    removeWishlistItem,
+    clearWishlist,
+    addAllToCart,
+} from "../api/wishlist";
+import { addItemToCart, createCartIfMissing } from "../api/cart";
+import { getProducto } from "../api/products";
+import WishlistItemRow from "../components/wishlist/wishlistItemRow";
+import { isBuyer, getUserId } from "../utils/userUtils";
+import "../styles/wishlist.css";
+
+export default function Wishlist() {
+    const { user } = useAuth();
+    const token = user?.token;
+    const usuarioId = getUserId(user);
+    const buyer = isBuyer(user);
+
+    const [wishlist, setWishlist] = useState(null);
+    const [enrichedItems, setEnrichedItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [addingToCart, setAddingToCart] = useState(false);
+    const [msg, setMsg] = useState("");
+
+    const load = async () => {
+        if (!token || !usuarioId) return;
+        try {
+            setLoading(true);
+            setMsg(""); // Limpiar mensajes previos
+
+            // Intentar obtener la wishlist (ahora maneja el caso de no existir)
+            const data = await getWishlist(token, usuarioId);
+            setWishlist(data);
+
+            // Enriquecer items con información de productos (imágenes)
+            if (data?.items?.length > 0) {
+                const enriched = await Promise.all(
+                    data.items.map(async (item) => {
+                        try {
+                            const producto = await getProducto(item.productoId);
+                            // Obtener la imagen principal del producto
+                            let imagenUrl = producto.imagenUrl;
+                            if (!imagenUrl && Array.isArray(producto.imagenes) && producto.imagenes.length > 0) {
+                                imagenUrl = producto.imagenes[0].url || producto.imagenes[0].imagenUrl;
+                            }
+                            return { ...item, imagenUrl, imagenes: producto.imagenes };
+                        } catch (error) {
+                            console.error(`Error al cargar producto ${item.productoId}:`, error);
+                            return item; // Devolver item sin enriquecer si falla
+                        }
+                    })
+                );
+                setEnrichedItems(enriched);
+            } else {
+                setEnrichedItems([]);
+            }
+        } catch (e) {
+            setMsg(String(e.message ?? e));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (token && usuarioId) load();
+    }, [token, usuarioId]);
+
+    const onRemove = async (productoId) => {
+        try {
+            const updated = await removeWishlistItem(token, usuarioId, productoId);
+            setWishlist(updated);
+            // Remover el item de enrichedItems
+            setEnrichedItems(prev => prev.filter(item => item.productoId !== productoId));
+        } catch (e) {
+            setMsg(String(e.message ?? e));
+            load();
+        }
+    };
+
+    const onClear = async () => {
+        try {
+            const updated = await clearWishlist(token, usuarioId);
+            setWishlist(updated);
+            setEnrichedItems([]);
+            setMsg("Wishlist vaciada correctamente");
+        } catch (e) {
+            setMsg(String(e.message ?? e));
+        }
+    };
+
+    const onAddAllToCart = async () => {
+        if (!enrichedItems.length) {
+            setMsg("No hay productos en la wishlist para agregar");
+            return;
+        }
+
+        try {
+            setAddingToCart(true);
+            setMsg("");
+
+            // Asegurar que el carrito existe
+            await createCartIfMissing(token, usuarioId);
+
+            // Intentar usar el endpoint del backend si existe
+            try {
+                await addAllToCart(token, usuarioId);
+                setMsg("¡Todos los productos fueron agregados al carrito!");
+                await load();
+                return;
+            } catch (backendError) {
+                console.log("Usando método manual para agregar al carrito");
+            }
+
+            // Fallback: agregar cada item manualmente
+            let successCount = 0;
+            let failCount = 0;
+
+            for (const item of enrichedItems) {
+                try {
+                    await addItemToCart(token, usuarioId, {
+                        productoId: item.productoId,
+                        cantidad: 1
+                    });
+                    successCount++;
+                } catch (error) {
+                    console.error(`Error al agregar ${item.productoTitulo}:`, error);
+                    failCount++;
+                }
+            }
+
+            if (successCount > 0) {
+                setMsg(`${successCount} producto(s) agregado(s) al carrito${failCount > 0 ? ` (${failCount} fallaron)` : ''}`);
+            } else {
+                setMsg("No se pudo agregar ningún producto al carrito");
+            }
+
+            await load();
+        } catch (e) {
+            setMsg(String(e.message ?? e));
+        } finally {
+            setAddingToCart(false);
+        }
+    };
+
+    if (!token) return <div className="wishlist-page container">Debes iniciar sesión.</div>;
+    if (!usuarioId) return <div className="wishlist-page container">No se detectó tu usuarioId en la sesión.</div>;
+    if (!buyer) return <div className="wishlist-page container">Tu cuenta no tiene permisos de COMPRADOR.</div>;
+
+    return (
+        <div className="wishlist-page container">
+            <h2>Tu Wishlist</h2>
+            {msg && <div className="alert">{msg}</div>}
+
+            <div className="wishlist-container">
+                {loading ? (
+                    <div className="skeleton">Cargando wishlist…</div>
+                ) : !enrichedItems.length ? (
+                    <div className="empty">Tu wishlist está vacía</div>
+                ) : (
+                    <>
+                        <div className="wishlist-items">
+                            {enrichedItems.map((item) => (
+                                <WishlistItemRow
+                                    key={`${item.productoId}`}
+                                    item={item}
+                                    onRemove={onRemove}
+                                />
+                            ))}
+                        </div>
+
+                        <div className="wishlist-actions">
+                            <button
+                                className="btn btn--primary btn--block"
+                                onClick={onAddAllToCart}
+                                disabled={addingToCart}
+                            >
+                                {addingToCart ? "Agregando..." : "Agregar todos al carrito"}
+                            </button>
+                            <button
+                                className="btn btn--ghost btn--block"
+                                onClick={onClear}
+                            >
+                                Vaciar wishlist
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}

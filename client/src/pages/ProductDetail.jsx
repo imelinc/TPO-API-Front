@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getProducto } from "../api/products";
 import { useAuth } from "../context/AuthContext";
 import { addItemToCart, createCartIfMissing } from "../api/cart";
+import { addItemToWishlist } from "../api/wishlist";
 import { getUserId } from "../utils/userUtils";
 import "../styles/productDetail.css";
 
@@ -93,9 +94,30 @@ export default function ProductDetail() {
         } catch (error) {
             alert("Error al agregar al carrito: " + error.message);
         }
-    }; const handleAddToWishlist = () => {
+    };
+
+    const handleAddToWishlist = async () => {
         if (!user) { goLogin("wishlist"); return; }
-        navigate("/wishlist");
+
+        const userId = getUserId(user);
+        if (!userId) {
+            alert("No se pudo identificar tu usuario");
+            return;
+        }
+
+        const token = user.token;
+        if (!token) {
+            alert("No se encontró el token de acceso");
+            return;
+        }
+
+        try {
+            // addItemToWishlist ya maneja la creación automática de la wishlist
+            await addItemToWishlist(token, userId, id);
+            alert("Producto agregado a la wishlist");
+        } catch (error) {
+            alert("Error al agregar a la wishlist: " + error.message);
+        }
     };
     // ----------------------------------------------------
 

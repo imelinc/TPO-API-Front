@@ -10,6 +10,7 @@ import Register from "./pages/Register";
 import Search from "./pages/Search";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
+import Wishlist from "./pages/Wishlist";
 import "./App.css";
 
 export default function App() {
@@ -34,6 +35,7 @@ export default function App() {
         {/* Rutas de usuario normal */}
         <Route path="/" element={<UserRoute><Home /></UserRoute>} />
         <Route path="/cart" element={<UserRoute><Cart /></UserRoute>} />
+        <Route path="/wishlist" element={<UserRoute><Wishlist /></UserRoute>} />
         <Route path="/search" element={<UserRoute><Search /></UserRoute>} />
         <Route path="/producto/:id" element={<UserRoute><ProductDetail /></UserRoute>} />
       </Routes>
