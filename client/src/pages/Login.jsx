@@ -26,16 +26,16 @@ export default function Login() {
         try {
             const data = await loginApi({ email, password });
 
-            // Solución temporal: asignar rol basado en el email
-            const rol = email === "nacho@gmail.com" ? "VENDEDOR" : "USUARIO";
-            console.log('Rol detectado:', rol); // Para debug
-
-            setUser({ username: data.username, email: data.email, rol });
+            // Usar la información del usuario que viene del backend
+            setUser({
+                username: data.user.username,
+                email: data.user.email,
+                rol: data.user.rol
+            });
             setMsg({ type: "success", text: "Inicio de sesión exitoso. Redirigiendo..." });
 
-            // Si es vendedor, redirigir al dashboard
-            const redirectTo = rol === "VENDEDOR" ? "/dashboard" : redirect;
-            console.log('Redirigiendo a:', redirectTo); // Para debug
+            // TODOS los vendedores van al dashboard, compradores van a donde estaban
+            const redirectTo = data.user.rol === "VENDEDOR" ? "/dashboard" : redirect;
 
             // Eliminamos el setTimeout para evitar posibles problemas de timing
             navigate(redirectTo, { replace: true });
