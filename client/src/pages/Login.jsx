@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom"; // ⬅️ + useLocation
 import { loginApi } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
 import "../styles/auth.css";
@@ -11,16 +11,25 @@ export default function Login() {
     const [msg, setMsg] = useState({ type: "", text: "" });
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation(); // ⬅️ leer query params
+
+    // ⬇️ Tomamos redirect/intent de la URL para volver a donde estaba el usuario
+    const params = new URLSearchParams(location.search);
+    const redirect = params.get("redirect") || "/";
+    const intent = params.get("intent") || ""; // "cart" | "wishlist" (opcional)
 
     const onSubmit = async (e) => {
         e.preventDefault();
         setMsg({ type: "", text: "" });
         setLoading(true);
         try {
+            // loginApi debe hacer el POST a tu backend y dejar cookie HttpOnly (sin localStorage)
             const data = await loginApi({ email, password });
             setUser({ username: data.username, email: data.email, rol: data.rol });
+
             setMsg({ type: "success", text: "Inicio de sesión exitoso. Redirigiendo..." });
-            setTimeout(() => navigate("/"), 900);
+            // ⬇️ Volvemos a la pantalla desde la que vino el usuario (producto, etc.)
+            setTimeout(() => navigate(redirect, { replace: true }), 900);
         } catch (err) {
             setMsg({ type: "error", text: err.message || "Credenciales inválidas" });
         } finally {
@@ -73,7 +82,12 @@ export default function Login() {
                     </form>
 
                     <div className="auth-footer">
-                        ¿Nuevo por acá? <Link to="/register">Crear una cuenta</Link>
+                        ¿Nuevo por acá?{" "}
+                        <Link
+                            to={`/register?redirect=${encodeURIComponent(redirect)}${intent ? `&intent=${intent}` : ""}`}
+                        >
+                            Crear una cuenta
+                        </Link>
                     </div>
                 </div>
             </div>
