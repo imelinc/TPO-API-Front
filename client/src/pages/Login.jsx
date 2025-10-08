@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { loginApi, getUserInfo } from "../api/auth";
+import { loginApi } from "../api/auth"; // asegúrate que devuelva exactamente el JSON que mostraste
 import { useAuth } from "../context/AuthContext";
-import { decodeJWT } from "../utils/jwt";
 import "../styles/auth.css";
 
 export default function Login() {
@@ -14,10 +13,9 @@ export default function Login() {
     const navigate = useNavigate();
     const location = useLocation();
 
-
     const params = new URLSearchParams(location.search);
     const redirect = params.get("redirect") || "/";
-    const intent = params.get("intent") || ""; // "cart" | "wishlist" 
+    const intent = params.get("intent") || ""; // "cart" | "wishlist"
 
     const onSubmit = async (e) => {
         e.preventDefault();
@@ -25,19 +23,21 @@ export default function Login() {
         setLoading(true);
         try {
             const data = await loginApi({ email, password });
-
-            // Usar la información del usuario que viene del backend
+            // data = { access_token, user: { id, username, email, rol, ... } }
             setUser({
+                token: data.access_token,       // ⬅ NECESARIO para Authorization
+                id: data.user.id,               // ⬅ NECESARIO para /carritos/usuario/{id}
                 username: data.user.username,
                 email: data.user.email,
-                rol: data.user.rol
+                rol: data.user.rol,             // "COMPRADOR" | "VENDEDOR" | "ADMIN"
+                nombre: data.user.nombre,
+                apellido: data.user.apellido,
             });
+
             setMsg({ type: "success", text: "Inicio de sesión exitoso. Redirigiendo..." });
 
-            // TODOS los vendedores van al dashboard, compradores van a donde estaban
+            // Vendedores al dashboard, compradores a donde estaban
             const redirectTo = data.user.rol === "VENDEDOR" ? "/dashboard" : redirect;
-
-            // Eliminamos el setTimeout para evitar posibles problemas de timing
             navigate(redirectTo, { replace: true });
         } catch (err) {
             setMsg({ type: "error", text: err.message || "Credenciales inválidas" });
