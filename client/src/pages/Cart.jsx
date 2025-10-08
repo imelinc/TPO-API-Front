@@ -9,6 +9,7 @@ import {
     validateCheckout,
     doCheckout,
 } from "../api/cart";
+import { getProducto } from "../api/products";
 import CartItemRow from "../components/cart/cartItemRow";
 import CartSummary from "../components/cart/cartSummary";
 import { isBuyer, getUserId } from "../utils/userUtils";
@@ -21,6 +22,7 @@ export default function Cart() {
     const buyer = isBuyer(user);
 
     const [carrito, setCarrito] = useState(null);
+    const [enrichedItems, setEnrichedItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [validating, setValidating] = useState(false);
     const [checkingOut, setCheckingOut] = useState(false);
@@ -33,6 +35,29 @@ export default function Cart() {
             await createCartIfMissing(token, usuarioId);
             const data = await getCart(token, usuarioId);
             setCarrito(data);
+
+            // Enriquecer items con información de productos (imágenes)
+            if (data?.items?.length > 0) {
+                const enriched = await Promise.all(
+                    data.items.map(async (item) => {
+                        try {
+                            const producto = await getProducto(item.productoId);
+                            // Obtener la imagen principal del producto
+                            let imagenUrl = producto.imagenUrl;
+                            if (!imagenUrl && Array.isArray(producto.imagenes) && producto.imagenes.length > 0) {
+                                imagenUrl = producto.imagenes[0].url || producto.imagenes[0].imagenUrl;
+                            }
+                            return { ...item, imagenUrl, imagenes: producto.imagenes };
+                        } catch (error) {
+                            console.error(`Error al cargar producto ${item.productoId}:`, error);
+                            return item; // Devolver item sin enriquecer si falla
+                        }
+                    })
+                );
+                setEnrichedItems(enriched);
+            } else {
+                setEnrichedItems([]);
+            }
         } catch (e) {
             setMsg(String(e.message ?? e));
         } finally {
@@ -48,6 +73,12 @@ export default function Cart() {
         try {
             const updated = await updateCartItemQty(token, usuarioId, productoId, cantidad);
             setCarrito(updated);
+            // Actualizar enrichedItems con la nueva cantidad
+            setEnrichedItems(prev => prev.map(item =>
+                item.productoId === productoId
+                    ? { ...item, cantidad, subtotal: item.precioUnitario * cantidad }
+                    : item
+            ));
         } catch (e) {
             setMsg(String(e.message ?? e));
             load();
@@ -58,6 +89,8 @@ export default function Cart() {
         try {
             const updated = await removeCartItem(token, usuarioId, productoId);
             setCarrito(updated);
+            // Remover el item de enrichedItems
+            setEnrichedItems(prev => prev.filter(item => item.productoId !== productoId));
         } catch (e) {
             setMsg(String(e.message ?? e));
             load();
@@ -68,6 +101,7 @@ export default function Cart() {
         try {
             const updated = await clearCart(token, usuarioId);
             setCarrito(updated);
+            setEnrichedItems([]);
         } catch (e) {
             setMsg(String(e.message ?? e));
         }
@@ -97,8 +131,6 @@ export default function Cart() {
     if (!usuarioId) return <div className="cart-page container">No se detectó tu usuarioId en la sesión.</div>;
     if (!buyer) return <div className="cart-page container">Tu cuenta no tiene permisos de COMPRADOR.</div>;
 
-    const items = carrito?.items ?? [];
-
     return (
         <div className="cart-page container">
             <h2>Tu carrito</h2>
@@ -108,10 +140,10 @@ export default function Cart() {
                 <div className="cart-left">
                     {loading ? (
                         <div className="skeleton">Cargando carrito…</div>
-                    ) : !items.length ? (
+                    ) : !enrichedItems.length ? (
                         <div className="empty">Tu carrito está vacío</div>
                     ) : (
-                        items.map((item) => (
+                        enrichedItems.map((item) => (
                             <CartItemRow
                                 key={`${item.productoId}`}
                                 item={item}

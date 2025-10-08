@@ -4,10 +4,27 @@ export default function CartItemRow({ item, onQtyChange, onRemove }) {
     const qty = item.cantidad;
     const subtotal = item.subtotal;
 
+    // obtener la imagen, similar a ProductDetail
+    const getImageUrl = () => {
+        // Primero intentar con imagenUrl directo
+        if (item.imagenUrl) return item.imagenUrl;
+
+        // Si hay un array de imágenes, usar la primera
+        if (Array.isArray(item.imagenes) && item.imagenes.length > 0) {
+            const firstImage = item.imagenes[0];
+            return firstImage.url || firstImage.imagenUrl;
+        }
+
+        // Fallback a imagen por defecto
+        return null;
+    };
+
+    const imageUrl = getImageUrl();
+
     return (
         <div className="cart-row">
-            {item.imagenUrl ? (
-                <img src={item.imagenUrl} alt={titulo} className="cart-row__img" />
+            {imageUrl ? (
+                <img src={imageUrl} alt={titulo} className="cart-row__img" />
             ) : (
                 <div className="cart-row__img--placeholder">{titulo?.[0] ?? "J"}</div>
             )}
