@@ -48,7 +48,24 @@ export default function Cart() {
                             if (!imagenUrl && Array.isArray(producto.imagenes) && producto.imagenes.length > 0) {
                                 imagenUrl = producto.imagenes[0].url || producto.imagenes[0].imagenUrl;
                             }
-                            return { ...item, imagenUrl, imagenes: producto.imagenes };
+
+                            const precioBase = producto.precio || 0;
+                            const tieneDescuento = producto.tieneDescuento;
+                            const precioConDescuento = producto.precioConDescuento || 0;
+                            const precioFinal = tieneDescuento ? precioConDescuento : precioBase;
+                            const cantidad = item.cantidad || 0;
+                            const subtotal = precioFinal * cantidad;
+
+                            return {
+                                ...item,
+                                imagenUrl,
+                                imagenes: producto.imagenes,
+                                precio: precioBase,
+                                precioConDescuento,
+                                tieneDescuento,
+                                subtotal,
+                                porcentajeDescuento: producto.porcentajeDescuento
+                            };
                         } catch (error) {
                             console.error(`Error al cargar producto ${item.productoId}:`, error);
                             return item; // Devolver item sin enriquecer si falla
@@ -77,7 +94,11 @@ export default function Cart() {
             // Actualizar enrichedItems con la nueva cantidad
             setEnrichedItems(prev => prev.map(item =>
                 item.productoId === productoId
-                    ? { ...item, cantidad, subtotal: item.precioUnitario * cantidad }
+                    ? {
+                        ...item,
+                        cantidad,
+                        subtotal: (item.tieneDescuento ? item.precioConDescuento : item.precio) * cantidad
+                    }
                     : item
             ));
         } catch (e) {
@@ -153,7 +174,7 @@ export default function Cart() {
 
                 <div className="cart-right">
                     <CartSummary
-                        carrito={carrito}
+                        items={enrichedItems}
                         onClear={onClear}
                         onCheckout={onCheckout}
                         validating={validating}

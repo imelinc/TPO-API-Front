@@ -3,12 +3,14 @@ import { addItemToCart, createCartIfMissing } from "../../api/cart";
 import { useAuth } from "../../context/AuthContext";
 import { isBuyer, getUserId } from "../../utils/userUtils";
 
-export default function AddToCartButton({ productoId, cantidad = 1, onAdded }) {
+export default function AddToCartButton({ productoId, cantidad = 1, precio, tieneDescuento = false, precioConDescuento, onAdded }) {
     const { user } = useAuth();
     const token = user?.token;
     const usuarioId = getUserId(user);
     const buyer = isBuyer(user);
     const [loading, setLoading] = useState(false);
+
+    const precioFinal = tieneDescuento ? precioConDescuento : precio;
 
     const handleAdd = async () => {
         if (!token) return alert("Debes iniciar sesión.");
@@ -19,7 +21,11 @@ export default function AddToCartButton({ productoId, cantidad = 1, onAdded }) {
             setLoading(true);
             // Asegurar que el carrito existe antes de agregar items
             await createCartIfMissing(token, usuarioId);
-            await addItemToCart(token, usuarioId, productoId, cantidad);
+            await addItemToCart(token, usuarioId, {
+                productoId,
+                cantidad,
+                precioUnitario: precio
+            });
             onAdded?.();
         } catch (e) {
             alert(String(e.message ?? e));

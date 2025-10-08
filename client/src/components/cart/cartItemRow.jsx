@@ -4,9 +4,20 @@ export default function CartItemRow({ item, onQtyChange, onRemove }) {
     const { user } = useAuth();
     const token = user?.token;
     const titulo = item.productoTitulo;
-    const unit = item.precioUnitario;
-    const qty = item.cantidad;
-    const subtotal = item.subtotal;
+    const precio = item.precio;
+    const precioConDescuento = item.precioConDescuento;
+    const tieneDescuento = item.tieneDescuento;
+    const displayPrice = tieneDescuento ? precioConDescuento : precio;
+    const qty = item.cantidad ?? 1;
+    const subtotal = displayPrice * qty;
+
+    const formatPrice = (price) => {
+        if (typeof price !== 'number') return '0,00';
+        return price.toLocaleString('es-AR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    };
 
     // Función para construir la URL de la imagen con el token
     const getImageUrl = () => {
@@ -59,7 +70,17 @@ export default function CartItemRow({ item, onQtyChange, onRemove }) {
             {renderImage()}            <div className="cart-row__info">
                 <h4 className="cart-row__title">{titulo}</h4>
                 <div className="cart-row__meta">
-                    <span className="cart-row__price">ARS ${unit.toLocaleString('es-AR')}</span>
+                    {tieneDescuento ? (
+                        <div className="cart-row__price-group">
+                            <span className="cart-row__price-original">ARS ${formatPrice(precio)}</span>
+                            <span className="cart-row__price">ARS ${formatPrice(precioConDescuento)}</span>
+                            {item.porcentajeDescuento && (
+                                <span className="cart-row__discount">-{item.porcentajeDescuento}%</span>
+                            )}
+                        </div>
+                    ) : (
+                        <span className="cart-row__price">ARS ${formatPrice(precio)}</span>
+                    )}
                 </div>
 
                 <div className="cart-row__actions">
@@ -98,7 +119,7 @@ export default function CartItemRow({ item, onQtyChange, onRemove }) {
             </div>
 
             <div className="cart-row__subtotal">
-                Subtotal: ARS ${subtotal.toLocaleString('es-AR')}
+                Subtotal: ARS ${formatPrice(subtotal)}
             </div>
         </div>
     );

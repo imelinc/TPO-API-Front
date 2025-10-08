@@ -2,7 +2,7 @@ const API = import.meta.env.VITE_API_BASE ?? "http://localhost:8080";
 
 const authHeaders = (token) => ({
     "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
+    "Authorization": `Bearer ${token}`,
 });
 
 // -------- Carrito --------
@@ -10,6 +10,7 @@ export async function createCartIfMissing(token, usuarioId) {
     const res = await fetch(`${API}/carritos/usuario/${usuarioId}`, {
         method: "POST",
         headers: authHeaders(token),
+        credentials: "include"
     });
     if (!res.ok) throw new Error("No se pudo crear/obtener el carrito");
     return res.json();
@@ -18,9 +19,12 @@ export async function createCartIfMissing(token, usuarioId) {
 export async function getCart(token, usuarioId) {
     const res = await fetch(`${API}/carritos/usuario/${usuarioId}`, {
         headers: authHeaders(token),
+        credentials: "include"
     });
     if (!res.ok) throw new Error("No se pudo obtener el carrito");
-    return res.json();
+    const data = await res.json();
+    console.log('Carrito recibido:', data);
+    return data;
 }
 
 export async function clearCart(token, usuarioId) {
@@ -33,11 +37,13 @@ export async function clearCart(token, usuarioId) {
 }
 
 // -------- Ítems --------
-export async function addItemToCart(token, usuarioId, { productoId, cantidad }) {
+export async function addItemToCart(token, usuarioId, { productoId, cantidad, precio }) {
+    console.log('Enviando al carrito:', { productoId, cantidad, precio });
     const res = await fetch(`${API}/carritos/usuario/${usuarioId}/items`, {
         method: "POST",
         headers: authHeaders(token),
-        body: JSON.stringify({ productoId, cantidad }),
+        credentials: "include",
+        body: JSON.stringify({ productoId, cantidad, precio }),
     });
     if (!res.ok) {
         const text = await res.text();
@@ -52,6 +58,7 @@ export async function updateCartItemQty(token, usuarioId, productoId, cantidad) 
         {
             method: "PATCH",
             headers: authHeaders(token),
+            credentials: "include",
             body: JSON.stringify({ cantidad }),
         }
     );
@@ -65,7 +72,11 @@ export async function updateCartItemQty(token, usuarioId, productoId, cantidad) 
 export async function removeCartItem(token, usuarioId, productoId) {
     const res = await fetch(
         `${API}/carritos/usuario/${usuarioId}/items/${productoId}`,
-        { method: "DELETE", headers: authHeaders(token) }
+        {
+            method: "DELETE",
+            headers: authHeaders(token),
+            credentials: "include"
+        }
     );
     if (!res.ok) throw new Error("No se pudo eliminar el ítem");
     return res.json(); // CarritoDTO
@@ -75,6 +86,7 @@ export async function removeCartItem(token, usuarioId, productoId) {
 export async function validateCheckout(token, usuarioId) {
     const res = await fetch(`${API}/checkout/usuario/${usuarioId}/validar`, {
         headers: authHeaders(token),
+        credentials: "include"
     });
     if (!res.ok) throw new Error("No se pudo validar el checkout");
     return res.json(); // { valido, mensaje }
@@ -84,6 +96,7 @@ export async function doCheckout(token, usuarioId) {
     const res = await fetch(`${API}/checkout/usuario/${usuarioId}`, {
         method: "POST",
         headers: authHeaders(token),
+        credentials: "include",
     });
     if (!res.ok) {
         const text = await res.text();

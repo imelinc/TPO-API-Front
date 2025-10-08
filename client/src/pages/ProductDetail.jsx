@@ -88,8 +88,13 @@ export default function ProductDetail() {
         try {
             // Asegurar que el carrito existe
             await createCartIfMissing(token, userId);
-            // Agregar el producto
-            await addItemToCart(token, userId, { productoId: id, cantidad: 1 });
+            // Agregar el producto con el precio correspondiente
+            const precioFinal = tieneDescuento ? precioConDescuento : precio;
+            await addItemToCart(token, userId, {
+                productoId: id,
+                cantidad: 1,
+                precio: precioFinal // Cambiado a 'precio' para que coincida con la API
+            });
             navigate("/cart");
         } catch (error) {
             alert("Error al agregar al carrito: " + error.message);
