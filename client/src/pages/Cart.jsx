@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import {
     createCartIfMissing,
     getCart,
@@ -7,7 +8,6 @@ import {
     removeCartItem,
     clearCart,
     validateCheckout,
-    doCheckout,
 } from "../api/cart";
 import { getProducto } from "../api/products";
 import CartItemRow from "../components/cart/cartItemRow";
@@ -16,6 +16,7 @@ import { isBuyer, getUserId } from "../utils/userUtils";
 import "../styles/cart.css";
 
 export default function Cart() {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const token = user?.token;
     const usuarioId = getUserId(user);
@@ -116,14 +117,10 @@ export default function Cart() {
                 setMsg(mensaje || "No se puede realizar el checkout");
                 return;
             }
-            setCheckingOut(true);
-            const orden = await doCheckout(token, usuarioId);
-            setMsg(`¡Compra completada! Orden #${orden?.id ?? ""}`);
-            await load();
+            // Redirigir a la página de checkout
+            navigate('/checkout');
         } catch (e) {
             setMsg(String(e.message ?? e));
-        } finally {
-            setCheckingOut(false);
         }
     };
 
