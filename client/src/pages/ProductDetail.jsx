@@ -15,6 +15,7 @@ export default function ProductDetail() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [err, setErr] = useState("");
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
     useEffect(() => {
         let alive = true;
@@ -27,14 +28,27 @@ export default function ProductDetail() {
         return () => { alive = false; };
     }, [id]);
 
+    // Resetear el índice seleccionado cuando cambie el producto
+    useEffect(() => {
+        setSelectedImageIndex(0);
+    }, [id]);
+
     const imgPrincipal = useMemo(() => {
         if (!data) return null;
-        const firstFromList =
-            Array.isArray(data.imagenes) && data.imagenes.length > 0
-                ? (data.imagenes[0].url || data.imagenes[0].imagenUrl)
-                : null;
-        return data.imagenUrl || firstFromList || "/promos/quality.jpg";
-    }, [data]);
+
+        // Si hay imágenes, usar la seleccionada
+        if (Array.isArray(data.imagenes) && data.imagenes.length > 0) {
+            const selectedImg = data.imagenes[selectedImageIndex];
+            if (selectedImg) {
+                return selectedImg.url || selectedImg.imagenUrl;
+            }
+            // Fallback a la primera si el índice no existe
+            const firstImg = data.imagenes[0];
+            return firstImg.url || firstImg.imagenUrl;
+        }
+
+        return data.imagenUrl || "/promos/quality.jpg";
+    }, [data, selectedImageIndex]);
 
     const formatMoney = (n) => (typeof n === "number" ? `$${n.toFixed(2)}` : "$-");
 
@@ -100,7 +114,16 @@ export default function ProductDetail() {
                             {data.imagenes.map((im, i) => {
                                 const url = im.url || im.imagenUrl;
                                 if (!url) return null;
-                                return <img key={i} src={url} alt={`${titulo} ${i + 1}`} className="pd-thumb" />;
+                                return (
+                                    <button
+                                        key={i}
+                                        className={`pd-thumbBtn ${selectedImageIndex === i ? 'is-active' : ''}`}
+                                        onClick={() => setSelectedImageIndex(i)}
+                                        type="button"
+                                    >
+                                        <img src={url} alt={`${titulo} ${i + 1}`} />
+                                    </button>
+                                );
                             })}
                         </div>
                     )}

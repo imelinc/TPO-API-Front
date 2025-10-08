@@ -276,6 +276,12 @@
     border-radius: 10px;
     background: #fff;
     cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.pd-thumbBtn:hover {
+    border-color: rgba(37, 99, 235, 0.3);
+    transform: scale(1.05);
 }
 
 .pd-thumbBtn img {
@@ -287,6 +293,10 @@
 }
 
 .pd-thumbBtn.is-active {
+    border-color: var(--primary, #2563eb);
+}
+
+.pd-thumbBtn.is-active:hover {
     border-color: var(--primary, #2563eb);
 }
 
