@@ -104,13 +104,13 @@ export async function clearWishlist(token, usuarioId) {
 }
 
 // -------- Items --------
-export async function addItemToWishlist(token, usuarioId, productoId) {
+export async function addItemToWishlist(token, usuarioId, productoId, productoTitulo) {
     try {
         // Intentar con el backend primero
         const res = await fetch(`${API}/wishlists/usuario/${usuarioId}/items`, {
             method: "POST",
             headers: authHeaders(token),
-            body: JSON.stringify({ productoId }),
+            body: JSON.stringify({ productoId, productoTitulo }),
         });
 
         if (res.ok) {
@@ -129,10 +129,10 @@ export async function addItemToWishlist(token, usuarioId, productoId) {
         throw new Error("El producto ya está en tu wishlist");
     }
 
-    // Agregar el nuevo item (sin título por ahora, se enriquecerá en la página)
+    // Agregar el nuevo item con su título
     wishlist.items.push({
         productoId,
-        productoTitulo: `Producto ${productoId}` // Placeholder
+        productoTitulo: productoTitulo || `Producto ${productoId}` // Usar título proporcionado o fallback
     });
 
     saveLocalWishlist(usuarioId, wishlist);

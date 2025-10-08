@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
     getWishlist,
@@ -17,6 +18,7 @@ export default function Wishlist() {
     const token = user?.token;
     const usuarioId = getUserId(user);
     const buyer = isBuyer(user);
+    const navigate = useNavigate();
 
     const [wishlist, setWishlist] = useState(null);
     const [enrichedItems, setEnrichedItems] = useState([]);
@@ -103,20 +105,11 @@ export default function Wishlist() {
             // Asegurar que el carrito existe
             await createCartIfMissing(token, usuarioId);
 
-            // Intentar usar el endpoint del backend si existe
-            try {
-                await addAllToCart(token, usuarioId);
-                setMsg("¡Todos los productos fueron agregados al carrito!");
-                await load();
-                return;
-            } catch (backendError) {
-                console.log("Usando método manual para agregar al carrito");
-            }
-
-            // Fallback: agregar cada item manualmente
+            // Agregar cada item al carrito
             let successCount = 0;
             let failCount = 0;
 
+            // Primero agregar todos al carrito
             for (const item of enrichedItems) {
                 try {
                     await addItemToCart(token, usuarioId, {
@@ -130,13 +123,18 @@ export default function Wishlist() {
                 }
             }
 
+            // Si se agregaron algunos productos con éxito, vaciar la wishlist
             if (successCount > 0) {
-                setMsg(`${successCount} producto(s) agregado(s) al carrito${failCount > 0 ? ` (${failCount} fallaron)` : ''}`);
+                try {
+                    await clearWishlist(token, usuarioId);
+                    setMsg(`${successCount} producto(s) agregado(s) al carrito y wishlist vaciada${failCount > 0 ? ` (${failCount} fallaron)` : ''}`);
+                    navigate('/cart'); // Redirigir al carrito después de agregar los productos
+                } catch (error) {
+                    setMsg(`${successCount} producto(s) agregado(s) al carrito pero no se pudo vaciar la wishlist`);
+                }
             } else {
                 setMsg("No se pudo agregar ningún producto al carrito");
             }
-
-            await load();
         } catch (e) {
             setMsg(String(e.message ?? e));
         } finally {

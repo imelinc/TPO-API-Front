@@ -185,7 +185,28 @@ export default function ProductDetail() {
                         <button className="btn-primary" disabled={sinStock} onClick={handleAddToCart}>
                             {sinStock ? "Sin stock" : "Agregar al carrito"}
                         </button>
-                        <button className="btn-outline" onClick={handleAddToWishlist}>
+                        <button className="btn-outline" onClick={async () => {
+                            if (!user) { goLogin("wishlist"); return; }
+
+                            const userId = getUserId(user);
+                            if (!userId) {
+                                alert("No se pudo identificar tu usuario");
+                                return;
+                            }
+
+                            const token = user.token;
+                            if (!token) {
+                                alert("No se encontró el token de acceso");
+                                return;
+                            }
+
+                            try {
+                                await addItemToWishlist(token, userId, id, titulo);
+                                navigate('/wishlist');
+                            } catch (error) {
+                                alert("Error al agregar a la wishlist: " + error.message);
+                            }
+                        }}>
                             Agregar a Wishlist
                         </button>
                     </div>
