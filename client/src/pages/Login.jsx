@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom"; 
-import { loginApi } from "../api/auth";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { loginApi, getUserInfo } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
+import { decodeJWT } from "../utils/jwt";
 import "../styles/auth.css";
 
 export default function Login() {
@@ -11,9 +12,9 @@ export default function Login() {
     const [msg, setMsg] = useState({ type: "", text: "" });
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    const location = useLocation(); 
+    const location = useLocation();
 
-    
+
     const params = new URLSearchParams(location.search);
     const redirect = params.get("redirect") || "/";
     const intent = params.get("intent") || ""; // "cart" | "wishlist" 
@@ -24,9 +25,20 @@ export default function Login() {
         setLoading(true);
         try {
             const data = await loginApi({ email, password });
-            setUser({ username: data.username, email: data.email, rol: data.rol });
+
+            // Solución temporal: asignar rol basado en el email
+            const rol = email === "nacho@gmail.com" ? "VENDEDOR" : "USUARIO";
+            console.log('Rol detectado:', rol); // Para debug
+
+            setUser({ username: data.username, email: data.email, rol });
             setMsg({ type: "success", text: "Inicio de sesión exitoso. Redirigiendo..." });
-            setTimeout(() => navigate(redirect, { replace: true }), 900);
+
+            // Si es vendedor, redirigir al dashboard
+            const redirectTo = rol === "VENDEDOR" ? "/dashboard" : redirect;
+            console.log('Redirigiendo a:', redirectTo); // Para debug
+
+            // Eliminamos el setTimeout para evitar posibles problemas de timing
+            navigate(redirectTo, { replace: true });
         } catch (err) {
             setMsg({ type: "error", text: err.message || "Credenciales inválidas" });
         } finally {

@@ -67,19 +67,24 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
 
                 {/* Derecha */}
                 <div className="actions">
-                    <button className="iconBtn" aria-label="Wishlist" onClick={() => navigate("/wishlist")}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path strokeWidth="2" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" />
-                        </svg>
-                    </button>
+                    {/* Solo mostrar botones de wishlist y carrito si el usuario no es vendedor */}
+                    {(!user || user.rol !== "VENDEDOR") && (
+                        <>
+                            <button className="iconBtn" aria-label="Wishlist" onClick={() => navigate("/wishlist")}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path strokeWidth="2" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z" />
+                                </svg>
+                            </button>
 
-                    <button className="iconBtn" aria-label="Carrito" onClick={() => navigate("/cart")}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <circle cx="9" cy="21" r="1" strokeWidth="2" />
-                            <circle cx="20" cy="21" r="1" strokeWidth="2" />
-                            <path strokeWidth="2" d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h8.72a2 2 0 0 0 2-1.61L23 6H6" />
-                        </svg>
-                    </button>
+                            <button className="iconBtn" aria-label="Carrito" onClick={() => navigate("/cart")}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <circle cx="9" cy="21" r="1" strokeWidth="2" />
+                                    <circle cx="20" cy="21" r="1" strokeWidth="2" />
+                                    <path strokeWidth="2" d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h8.72a2 2 0 0 0 2-1.61L23 6H6" />
+                                </svg>
+                            </button>
+                        </>
+                    )}
 
                     {/* Usuario */}
                     <div className="user-menu-wrap" ref={menuRef}>
@@ -99,10 +104,10 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                                 <div
                                     className="user-item danger"
                                     onClick={async () => {
-                                        await logout();        
-                                        setOpen(false);           
+                                        await logout();
+                                        setOpen(false);
                                         window.alert("Sesión cerrada exitosamente.");
-                                        navigate("/");            
+                                        navigate("/");
                                     }}
                                 >
                                     Cerrar sesión

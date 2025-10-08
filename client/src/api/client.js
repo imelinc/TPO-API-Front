@@ -4,6 +4,7 @@ export const AUTH = {
     LOGIN: `${API_URL}/auth/login`,
     REGISTER: `${API_URL}/auth/register`,
     LOGOUT: `${API_URL}/auth/logout`,
+    ME: `${API_URL}/auth/me`,
 };
 
 export async function postJSON(url, body) {
@@ -14,6 +15,19 @@ export async function postJSON(url, body) {
         body: JSON.stringify(body ?? {}),
     });
     // Por si el back devuelve 204 sin body
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || data.error || "Error en la solicitud");
+    return data;
+}
+
+export async function getJSON(url, token) {
+    const res = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+            "Authorization": `Bearer ${token}`,
+        },
+    });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.message || data.error || "Error en la solicitud");
     return data;
