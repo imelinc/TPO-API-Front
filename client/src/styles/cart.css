@@ -20,7 +20,7 @@
 .cart-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 16px;
+    gap: 24px;
 }
 
 .cart-left,
@@ -28,7 +28,7 @@
     background: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
-    padding: 16px;
+    padding: 24px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -41,10 +41,10 @@
 
 .cart-row {
     display: grid;
-    grid-template-columns: 64px 1fr 120px;
-    gap: 12px;
+    grid-template-columns: 80px 1fr auto;
+    gap: 16px;
     align-items: center;
-    padding: 12px 0;
+    padding: 16px;
     border-bottom: 1px solid #e5e7eb;
     color: #111827;
 }
@@ -53,15 +53,20 @@
     border-bottom: none;
 }
 
+.cart-row__img,
 .cart-row__img--placeholder {
-    width: 64px;
-    height: 64px;
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.cart-row__img--placeholder {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
-    background: #0f0f0f;
-    color: #888;
+    background: #f3f4f6;
+    color: #9ca3af;
     font-weight: 700;
     font-size: 18px;
 }
@@ -89,9 +94,69 @@
 
 .cart-row__actions {
     display: flex;
-    gap: 12px;
     align-items: center;
-    flex-wrap: wrap;
+    gap: 40px;
+}
+
+.cart-row__subtotal {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111827;
+    min-width: 120px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.qty {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    overflow: hidden;
+    height: 36px;
+    
+}
+
+.qty__btn {
+    width: 36px;
+    min-width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    border: none;
+    font-size: 20px;
+    font-weight: 500;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.qty__btn:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.qty__input {
+    width: 48px;
+    border: none;
+    border-left: 1px solid #e5e7eb;
+    border-right: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 15px;
+    color: #111827;
+    background: #ffffff;
+    padding: 0;
+    margin: 0;
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.qty__input::-webkit-inner-spin-button,
+.qty__input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .cart-summary {
@@ -132,7 +197,7 @@
 }
 
 .qty__btn {
-    background: #1f1f1f;
+    background: #000000;
     border: none;
     padding: 6px 10px;
     font-size: 18px;
@@ -144,7 +209,7 @@
     background: transparent;
     border: none;
     text-align: center;
-    color: #fff;
+    color: #000000;
     padding: 6px 0;
     outline: none;
 }

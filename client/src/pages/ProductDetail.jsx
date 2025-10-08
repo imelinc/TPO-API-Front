@@ -2,12 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getProducto } from "../api/products";
 import { useAuth } from "../context/AuthContext";
+import { addItemToCart, createCartIfMissing } from "../api/cart";
+import { getUserId } from "../utils/userUtils";
 import "../styles/productDetail.css";
 
 export default function ProductDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    const { user } = useAuth();
 
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -46,19 +49,37 @@ export default function ProductDetail() {
 
     const sinStock = typeof stock === "number" ? stock <= 0 : false;
 
-    const { user } = useAuth();
-
     const goLogin = (intent /* "cart" | "wishlist" */) => {
         const current = location.pathname + location.search;
         navigate(`/login?redirect=${encodeURIComponent(current)}&intent=${intent}`);
     };
 
-    const handleAddToCart = () => {
+    const handleAddToCart = async () => {
         if (!user) { goLogin("cart"); return; }
-        navigate("/cart");
-    };
 
-    const handleAddToWishlist = () => {
+        const userId = getUserId(user);
+        if (!userId) {
+            alert("No se pudo identificar tu usuario");
+            return;
+        }
+
+        // Obtener el token de acceso
+        const token = user.token;
+        if (!token) {
+            alert("No se encontró el token de acceso");
+            return;
+        }
+
+        try {
+            // Asegurar que el carrito existe
+            await createCartIfMissing(token, userId);
+            // Agregar el producto
+            await addItemToCart(token, userId, { productoId: id, cantidad: 1 });
+            navigate("/cart");
+        } catch (error) {
+            alert("Error al agregar al carrito: " + error.message);
+        }
+    }; const handleAddToWishlist = () => {
         if (!user) { goLogin("wishlist"); return; }
         navigate("/wishlist");
     };

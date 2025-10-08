@@ -6,12 +6,16 @@ export default function CartItemRow({ item, onQtyChange, onRemove }) {
 
     return (
         <div className="cart-row">
-            <div className="cart-row__img--placeholder">{titulo?.[0] ?? "J"}</div>
+            {item.imagenUrl ? (
+                <img src={item.imagenUrl} alt={titulo} className="cart-row__img" />
+            ) : (
+                <div className="cart-row__img--placeholder">{titulo?.[0] ?? "J"}</div>
+            )}
 
             <div className="cart-row__info">
                 <h4 className="cart-row__title">{titulo}</h4>
                 <div className="cart-row__meta">
-                    <span className="cart-row__price">USD {unit.toFixed(2)}</span>
+                    <span className="cart-row__price">ARS ${unit.toLocaleString('es-AR')}</span>
                 </div>
 
                 <div className="cart-row__actions">
@@ -49,7 +53,9 @@ export default function CartItemRow({ item, onQtyChange, onRemove }) {
                 </div>
             </div>
 
-            <div className="cart-row__subtotal">USD {subtotal.toFixed(2)}</div>
+            <div className="cart-row__subtotal">
+                Subtotal: ARS ${subtotal.toLocaleString('es-AR')}
+            </div>
         </div>
     );
 }
