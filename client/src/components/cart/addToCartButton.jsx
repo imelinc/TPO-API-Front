@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { addItemToCart } from "../api/cart";
-import { useAuth } from "../context/AuthContext";
-import { isBuyer, getUserId } from "../utils/auth";
+import { addItemToCart, createCartIfMissing } from "../../api/cart";
+import { useAuth } from "../../context/AuthContext";
+import { isBuyer, getUserId } from "../../utils/userUtils";
 
 export default function AddToCartButton({ productoId, cantidad = 1, onAdded }) {
     const { user } = useAuth();
@@ -17,7 +17,9 @@ export default function AddToCartButton({ productoId, cantidad = 1, onAdded }) {
 
         try {
             setLoading(true);
-            await addItemToCart(token, usuarioId, { productoId, cantidad });
+            // Asegurar que el carrito existe antes de agregar items
+            await createCartIfMissing(token, usuarioId);
+            await addItemToCart(token, usuarioId, productoId, cantidad);
             onAdded?.();
         } catch (e) {
             alert(String(e.message ?? e));

@@ -12,11 +12,11 @@ export default function CartSummary({ carrito, onClear, onCheckout, validating, 
             </div>
             <div className="cart-summary__row">
                 <span>Subtotal</span>
-                <span>USD {subtotal.toFixed(2)}</span>
+                <span>ARS ${subtotal.toLocaleString('es-AR')}</span>
             </div>
             <div className="cart-summary__row cart-summary__row--total">
                 <span>Total</span>
-                <span>USD {total.toFixed(2)}</span>
+                <span>ARS ${total.toLocaleString('es-AR')}</span>
             </div>
 
             <button className="btn btn--primary btn--block" disabled={validating || checkingOut || items.length === 0} onClick={onCheckout}>
