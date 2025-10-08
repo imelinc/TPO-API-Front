@@ -268,7 +268,7 @@
 .cart-summary__row {
     display: flex;
     justify-content: space-between;
-    color: #ddd;
+    color: #000000;
 }
 
 .cart-summary__row--total {
