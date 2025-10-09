@@ -32,7 +32,7 @@
     width: 120px;
     height: 120px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #64748b;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -40,7 +40,6 @@
     font-weight: bold;
     color: white;
     margin: 0 auto;
-    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
 }
 
 .profile-main-info {
@@ -71,46 +70,14 @@
     letter-spacing: 0.5px;
 }
 
-.profile-role--comprador {
-    background-color: #dbeafe;
-    color: #1d4ed8;
-}
-
-.profile-role--vendedor {
-    background-color: #dcfce7;
-    color: #166534;
-}
-
+.profile-role--comprador,
+.profile-role--vendedor,
 .profile-role--admin {
-    background-color: #fef3c7;
-    color: #92400e;
-}
-
-.profile-nav {
-    border-top: 1px solid #e2e8f0;
-    padding-top: 1.5rem;
-}
-
-.profile-nav-item {
-    display: block;
-    padding: 0.75rem 1rem;
-    color: #64748b;
-    text-decoration: none;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-    margin-bottom: 0.25rem;
-}
-
-.profile-nav-item:hover {
     background-color: #f1f5f9;
-    color: #334155;
+    color: #64748b;
 }
 
-.profile-nav-item--active {
-    background-color: #e0e7ff;
-    color: #4338ca;
-    font-weight: 600;
-}
+
 
 /* Lado Derecho */
 .profile-right {
@@ -197,14 +164,16 @@
 }
 
 .profile-action-btn--secondary {
-    background-color: #e2e8f0;
-    color: #475569;
+    background-color: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
 }
 
 .profile-action-btn--secondary:hover {
-    background-color: #cbd5e1;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(71, 85, 105, 0.2);
+    background-color: #f1f5f9;
+    color: #475569;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Responsive Design */

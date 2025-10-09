@@ -63,12 +63,7 @@ export default function Profile() {
                             </span>
                         </div>
 
-                        {/* Navegación del perfil */}
-                        <nav className="profile-nav">
-                            <Link to="/profile" className="profile-nav-item profile-nav-item--active">
-                                Información Personal
-                            </Link>
-                        </nav>
+
                     </div>
 
                     {/* Lado Derecho - Detalles y Acciones */}

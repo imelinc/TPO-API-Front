@@ -42,7 +42,7 @@ export default function App() {
         <Route path="/checkout" element={<UserRoute><Checkout /></UserRoute>} />
         <Route path="/payment-success" element={<UserRoute><PaymentSuccess /></UserRoute>} />
         <Route path="/wishlist" element={<UserRoute><Wishlist /></UserRoute>} />
-        <Route path="/profile" element={<UserRoute><Profile /></UserRoute>} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/orders" element={<UserRoute><Orders /></UserRoute>} />
         <Route path="/search" element={<UserRoute><Search /></UserRoute>} />
         <Route path="/producto/:id" element={<UserRoute><ProductDetail /></UserRoute>} />
