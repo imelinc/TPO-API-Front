@@ -10,6 +10,7 @@ import {
 import { addItemToCart, createCartIfMissing } from "../api/cart";
 import { getProducto } from "../api/products";
 import WishlistItemRow from "../components/wishlist/wishlistItemRow";
+import StatusMessage from "../components/common/StatusMessage";
 import { isBuyer, getUserId } from "../utils/userUtils";
 import "../styles/wishlist.css";
 
@@ -142,9 +143,41 @@ export default function Wishlist() {
         }
     };
 
-    if (!token) return <div className="wishlist-page container">Debes iniciar sesión.</div>;
-    if (!usuarioId) return <div className="wishlist-page container">No se detectó tu usuarioId en la sesión.</div>;
-    if (!buyer) return <div className="wishlist-page container">Tu cuenta no tiene permisos de COMPRADOR.</div>;
+    if (!token) {
+        return (
+            <StatusMessage
+                type="error"
+                title="Acceso Denegado"
+                message="Debes iniciar sesión para ver tu lista de deseos"
+                linkTo="/login"
+                linkText="Iniciar Sesión"
+            />
+        );
+    }
+
+    if (!usuarioId) {
+        return (
+            <StatusMessage
+                type="error"
+                title="Error de Sesión"
+                message="No se detectó tu usuarioId en la sesión"
+                linkTo="/login"
+                linkText="Iniciar Sesión"
+            />
+        );
+    }
+
+    if (!buyer) {
+        return (
+            <StatusMessage
+                type="error"
+                title="Permisos Insuficientes"
+                message="Tu cuenta no tiene permisos de comprador"
+                linkTo="/login"
+                linkText="Iniciar Sesión"
+            />
+        );
+    }
 
     return (
         <div className="wishlist-page container">

@@ -12,6 +12,7 @@ import {
 import { getProducto } from "../api/products";
 import CartItemRow from "../components/cart/cartItemRow";
 import CartSummary from "../components/cart/cartSummary";
+import StatusMessage from "../components/common/StatusMessage";
 import { isBuyer, getUserId } from "../utils/userUtils";
 import "../styles/cart.css";
 
@@ -145,9 +146,41 @@ export default function Cart() {
         }
     };
 
-    if (!token) return <div className="cart-page container">Debes iniciar sesión.</div>;
-    if (!usuarioId) return <div className="cart-page container">No se detectó tu usuarioId en la sesión.</div>;
-    if (!buyer) return <div className="cart-page container">Tu cuenta no tiene permisos de COMPRADOR.</div>;
+    if (!token) {
+        return (
+            <StatusMessage
+                type="error"
+                title="Acceso Denegado"
+                message="Debes iniciar sesión para ver tu carrito"
+                linkTo="/login"
+                linkText="Iniciar Sesión"
+            />
+        );
+    }
+
+    if (!usuarioId) {
+        return (
+            <StatusMessage
+                type="error"
+                title="Error de Sesión"
+                message="No se detectó tu usuarioId en la sesión"
+                linkTo="/login"
+                linkText="Iniciar Sesión"
+            />
+        );
+    }
+
+    if (!buyer) {
+        return (
+            <StatusMessage
+                type="error"
+                title="Permisos Insuficientes"
+                message="Tu cuenta no tiene permisos de comprador"
+                linkTo="/login"
+                linkText="Iniciar Sesión"
+            />
+        );
+    }
 
     return (
         <div className="cart-page container">
