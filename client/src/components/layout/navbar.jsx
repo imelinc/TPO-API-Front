@@ -101,6 +101,32 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
 
                         {user && open && (
                             <div className="user-menu" role="menu" aria-label="Menú de usuario">
+                                <div className="user-menu-header">
+                                    <div className="user-menu-name">
+                                        {user.nombre && user.apellido
+                                            ? `${user.nombre} ${user.apellido}`
+                                            : user.username
+                                        }
+                                    </div>
+                                    <div className="user-menu-email">{user.email}</div>
+                                </div>
+
+                                <div className="user-menu-divider"></div>
+
+                                <div
+                                    className="user-item"
+                                    onClick={() => {
+                                        setOpen(false);
+                                        navigate("/profile");
+                                    }}
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                        <circle cx="12" cy="7" r="4" />
+                                    </svg>
+                                    Perfil
+                                </div>
+
                                 <div
                                     className="user-item danger"
                                     onClick={async () => {
@@ -110,6 +136,11 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                                         navigate("/");
                                     }}
                                 >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                        <polyline points="16,17 21,12 16,7" />
+                                        <line x1="21" y1="12" x2="9" y2="12" />
+                                    </svg>
                                     Cerrar sesión
                                 </div>
                             </div>
