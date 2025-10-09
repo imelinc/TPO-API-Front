@@ -21,16 +21,51 @@ export async function getUserOrders(token, usuarioId) {
     return data.content || [];
 }
 
-// Obtener detalles de un item de orden específico (si existe este endpoint)
-export async function getOrderItem(token, itemId) {
-    const res = await fetch(`${API}/orden-items/${itemId}`, {
-        method: "GET",
-        headers: authHeaders(token),
-        credentials: "include",
-    });
-    if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "No se pudo cargar el item de la orden");
+// Obtener detalles de los items de una orden
+import { getProducto } from "./products";
+export async function getOrderItems(token, itemIds) {
+    try {
+        const items = await Promise.all(
+            itemIds.map(async (itemId) => {
+                try {
+                    const res = await fetch(`${API}/orden-items/${itemId}`, {
+                        method: "GET",
+                        headers: authHeaders(token),
+                        credentials: "include",
+                    });
+                    if (res.ok) {
+                        return await res.json();
+                    }
+                } catch (error) {
+                    // Si falla, buscar el producto directamente
+                    try {
+                        const producto = await getProducto(itemId);
+                        if (producto) {
+                            return {
+                                id: itemId,
+                                productoTitulo: producto.titulo || `Producto #${itemId}`,
+                                cantidad: 1,
+                                precio: producto.precio || 0,
+                                productoId: producto.id
+                            };
+                        }
+                    } catch (err) {
+                        console.error(`Error loading producto ${itemId}:`, err);
+                    }
+                }
+                // Fallback final: objeto placeholder
+                return {
+                    id: itemId,
+                    productoTitulo: `Item #${itemId}`,
+                    cantidad: 1,
+                    precio: 0,
+                    productoId: null
+                };
+            })
+        );
+        return items;
+    } catch (error) {
+        console.error('Error loading order items:', error);
+        return [];
     }
-    return res.json();
 }
