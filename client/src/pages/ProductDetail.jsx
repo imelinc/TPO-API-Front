@@ -34,22 +34,41 @@ export default function ProductDetail() {
         setSelectedImageIndex(0);
     }, [id]);
 
-    const imgPrincipal = useMemo(() => {
-        if (!data) return null;
+    // Array combinado de todas las imágenes disponibles
+    const todasLasImagenes = useMemo(() => {
+        if (!data) return [];
 
-        // Si hay imágenes, usar la seleccionada
-        if (Array.isArray(data.imagenes) && data.imagenes.length > 0) {
-            const selectedImg = data.imagenes[selectedImageIndex];
-            if (selectedImg) {
-                return selectedImg.url || selectedImg.imagenUrl;
-            }
-            // Fallback a la primera si el índice no existe
-            const firstImg = data.imagenes[0];
-            return firstImg.url || firstImg.imagenUrl;
+        const imagenes = [];
+
+        // Agregar imagen principal si existe
+        if (data.imagenUrl) {
+            imagenes.push({ url: data.imagenUrl, esPrincipal: true });
         }
 
-        return data.imagenUrl || "/promos/quality.jpg";
-    }, [data, selectedImageIndex]);
+        // Agregar imágenes adicionales (evitar duplicados)
+        if (Array.isArray(data.imagenes) && data.imagenes.length > 0) {
+            data.imagenes.forEach(img => {
+                const url = img.url || img.imagenUrl;
+                if (url && url !== data.imagenUrl) {
+                    imagenes.push({ url, esPrincipal: false });
+                }
+            });
+        }
+
+        return imagenes;
+    }, [data]);
+
+    const imgPrincipal = useMemo(() => {
+        if (todasLasImagenes.length === 0) return "/promos/quality.jpg";
+
+        const selectedImg = todasLasImagenes[selectedImageIndex];
+        if (selectedImg) {
+            return selectedImg.url;
+        }
+
+        // Fallback a la primera
+        return todasLasImagenes[0].url;
+    }, [todasLasImagenes, selectedImageIndex]);
 
     const formatMoney = (n) => (typeof n === "number" ? `$${n.toFixed(2)}` : "$-");
 
@@ -136,22 +155,18 @@ export default function ProductDetail() {
                 {/* Media */}
                 <div className="pd-media">
                     <img className="pd-cover" src={imgPrincipal} alt={titulo} />
-                    {Array.isArray(data.imagenes) && data.imagenes.length > 1 && (
+                    {todasLasImagenes.length > 1 && (
                         <div className="pd-thumbs">
-                            {data.imagenes.map((im, i) => {
-                                const url = im.url || im.imagenUrl;
-                                if (!url) return null;
-                                return (
-                                    <button
-                                        key={i}
-                                        className={`pd-thumbBtn ${selectedImageIndex === i ? 'is-active' : ''}`}
-                                        onClick={() => setSelectedImageIndex(i)}
-                                        type="button"
-                                    >
-                                        <img src={url} alt={`${titulo} ${i + 1}`} />
-                                    </button>
-                                );
-                            })}
+                            {todasLasImagenes.map((img, i) => (
+                                <button
+                                    key={i}
+                                    className={`pd-thumbBtn ${selectedImageIndex === i ? 'is-active' : ''}`}
+                                    onClick={() => setSelectedImageIndex(i)}
+                                    type="button"
+                                >
+                                    <img src={img.url} alt={`${titulo} ${i + 1}`} />
+                                </button>
+                            ))}
                         </div>
                     )}
                 </div>
