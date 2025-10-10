@@ -42,8 +42,7 @@ export default function ProductList() {
 
         try {
             await deleteProducto(user?.token, productoId);
-            setMessage({ type: 'success', text: 'Producto eliminado correctamente' });
-            // Remover el producto de la lista local
+            // Remover el producto de la lista local sin mostrar mensaje
             setProductos(prev => prev.filter(p => p.id !== productoId));
         } catch (error) {
             setMessage({ type: 'error', text: 'Error al eliminar el producto' });
