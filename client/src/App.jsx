@@ -3,6 +3,7 @@ import VendedorRoute from "./routes/VendedorRoute";
 import UserRoute from "./routes/UserRoute";
 import HomeGate from "./pages/HomeGate";
 import Dashboard from "./pages/Dashboard";
+import ProductForm from "./pages/ProductForm";
 import Navbar from "./components/layout/Navbar";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -32,6 +33,22 @@ export default function App() {
           element={
             <VendedorRoute>
               <Dashboard />
+            </VendedorRoute>
+          }
+        />
+        <Route
+          path="/dashboard/producto/crear"
+          element={
+            <VendedorRoute>
+              <ProductForm />
+            </VendedorRoute>
+          }
+        />
+        <Route
+          path="/dashboard/producto/editar/:id"
+          element={
+            <VendedorRoute>
+              <ProductForm />
             </VendedorRoute>
           }
         />
