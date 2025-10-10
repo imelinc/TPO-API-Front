@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProductList from "../components/vendedor/ProductList";
+import CategoriasList from "../components/vendedor/CategoriasList";
 import "../styles/dashboard.css";
 
 const TABS = [
     { key: "productos", label: "Productos" },
     { key: "categorias", label: "Categorías" },
     { key: "descuentos", label: "Descuentos" },
-    { key: "imagenes", label: "Imágenes" },
 ];
 
 export default function Dashboard() {
@@ -57,13 +57,7 @@ export default function Dashboard() {
                 )}
 
                 {tab === "categorias" && (
-                    <EmptyState
-                        title="Categorías"
-                        hint="Definí y organizá las categorías de tu tienda."
-                        actions={[
-                            { text: "Nueva categoría", primary: true, disabled: true },
-                        ]}
-                    />
+                    <CategoriasList />
                 )}
 
                 {tab === "descuentos" && (
@@ -72,16 +66,6 @@ export default function Dashboard() {
                         hint="Configurá promociones y periodos de descuentos."
                         actions={[
                             { text: "Crear descuento", primary: true, disabled: true },
-                        ]}
-                    />
-                )}
-
-                {tab === "imagenes" && (
-                    <EmptyState
-                        title="Imágenes"
-                        hint="Agregá imágenes a tus productos y administralas."
-                        actions={[
-                            { text: "Subir imágenes", primary: true, disabled: true },
                         ]}
                     />
                 )}

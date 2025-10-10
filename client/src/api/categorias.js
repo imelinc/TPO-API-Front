@@ -27,3 +27,22 @@ export async function createCategoria(token, categoria) {
     const url = `${API_URL}/categorias`;
     return postJSONWithToken(url, categoria, token);
 }
+
+// Eliminar categoría
+export async function deleteCategoria(token, id) {
+    const url = `${API_URL}/categorias/${id}`;
+    const res = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    if (!res.ok) {
+        const error = await res.text().catch(() => 'Error desconocido');
+        throw new Error(`HTTP ${res.status}: ${error}`);
+    }
+
+    // DELETE devuelve 204 No Content sin body
+    return;
+}
