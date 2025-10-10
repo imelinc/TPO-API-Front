@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import ProductList from "../components/vendedor/ProductList";
 import "../styles/dashboard.css";
 
 const TABS = [
@@ -10,6 +12,11 @@ const TABS = [
 
 export default function Dashboard() {
     const [tab, setTab] = useState("productos");
+    const navigate = useNavigate();
+
+    const handleCreateProduct = () => {
+        navigate('/dashboard/producto/crear');
+    };
 
     return (
         <section className="dash-wrap">
@@ -32,14 +39,21 @@ export default function Dashboard() {
 
             <div className="dash-panel">
                 {tab === "productos" && (
-                    <EmptyState
-                        title="Productos"
-                        hint="Acá vas a poder crear, actualizar y eliminar productos."
-                        actions={[
-                            { text: "Crear producto", primary: true, disabled: true },
-                            { text: "Importar desde CSV", primary: false, disabled: true },
-                        ]}
-                    />
+                    <div className="productos-panel">
+                        <div className="productos-header">
+                            <div className="productos-title">
+                                <h2>Productos</h2>
+                                <p>Gestiona tu catálogo de productos</p>
+                            </div>
+                            <button
+                                onClick={handleCreateProduct}
+                                className="btn-primary"
+                            >
+                                Crear producto
+                            </button>
+                        </div>
+                        <ProductList />
+                    </div>
                 )}
 
                 {tab === "categorias" && (
