@@ -24,7 +24,15 @@ export default function AddToWishlistButton({ productoId, producto, onAdded }) {
             onAdded?.();
             navigate('/wishlist');
         } catch (e) {
-            alert(String(e.message ?? e));
+            const errorMessage = e.message || "Error desconocido";
+
+            if (errorMessage.includes("Error interno del servidor")) {
+                alert("⚠️ El servidor está experimentando problemas temporales. Por favor, inténtalo en unos minutos.");
+            } else if (errorMessage.includes("Error de conexión")) {
+                alert("🌐 No se pudo conectar al servidor. Verifica tu conexión a internet.");
+            } else {
+                alert(errorMessage);
+            }
         } finally {
             setLoading(false);
         }

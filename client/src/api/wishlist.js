@@ -5,30 +5,55 @@ const authHeaders = (token) => ({
     Authorization: `Bearer ${token}`,
 });
 
+// Función helper para retry en caso de errores 500
+const fetchWithRetry = async (url, options, maxRetries = 2) => {
+    let lastError;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await fetch(url, options);
+
+            // Si no es error 500, retornar la respuesta (exitosa o con error)
+            if (response.status !== 500) {
+                return response;
+            }
+
+            // Si es error 500 y no es el último intento, continuar
+            if (attempt < maxRetries) {
+                // Esperar un poco antes del siguiente intento
+                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                continue;
+            }
+
+            // Si es el último intento, retornar la respuesta con error
+            return response;
+        } catch (error) {
+            lastError = error;
+            if (attempt < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                continue;
+            }
+        }
+    }
+
+    // Si llegamos aquí, todos los intentos fallaron
+    throw lastError;
+};
+
 // -------- Wishlist --------
 export async function createWishlistIfMissing(token, usuarioId) {
     try {
-        // Intentar con el backend primero
-        const getRes = await fetch(`${API}/wishlists/usuario/${usuarioId}`, {
+        // Usar el endpoint correcto del backend
+        const createRes = await fetch(`${API}/usuarios/${usuarioId}/wishlist/create-if-not-exists`, {
+            method: "POST",
             headers: authHeaders(token),
         });
 
-        if (getRes.ok) {
-            return await getRes.json();
-        }
-
-        if (getRes.status === 404) {
-            const createRes = await fetch(`${API}/wishlists/usuario/${usuarioId}`, {
-                method: "POST",
-                headers: authHeaders(token),
-            });
-
-            if (createRes.ok) {
-                return await createRes.json();
-            }
+        if (createRes.ok) {
+            return await createRes.json();
         }
     } catch (error) {
-        console.error("Error al crear/obtener wishlist:", error.message);
+        // Error silencioso
     }
 
     // Retornar wishlist vacía si hay error
@@ -37,8 +62,8 @@ export async function createWishlistIfMissing(token, usuarioId) {
 
 export async function getWishlist(token, usuarioId) {
     try {
-        // Intentar con el backend
-        const res = await fetch(`${API}/wishlists/usuario/${usuarioId}`, {
+        // Usar el endpoint correcto del backend
+        const res = await fetchWithRetry(`${API}/usuarios/${usuarioId}/wishlist`, {
             headers: authHeaders(token),
         });
 
@@ -50,25 +75,29 @@ export async function getWishlist(token, usuarioId) {
             // Backend existe pero no hay wishlist, retornar vacía
             return { items: [] };
         }
-    } catch (error) {
-        console.error("Error al obtener wishlist:", error.message);
-    }
 
-    // Retornar wishlist vacía si hay error
-    return { items: [] };
+        if (res.status === 500) {
+            return { items: [] };
+        }
+
+        // Otros errores
+        return { items: [] };
+    } catch (error) {
+        return { items: [] };
+    }
 }
 
 export async function clearWishlist(token, usuarioId) {
     try {
-        const res = await fetch(`${API}/wishlists/usuario/${usuarioId}/vaciar`, {
+        const res = await fetch(`${API}/usuarios/${usuarioId}/wishlist/items`, {
             method: "DELETE",
             headers: authHeaders(token),
         });
         if (res.ok) {
-            return await res.json();
+            return { items: [] }; // Retorna wishlist vacía tras limpiar
         }
     } catch (error) {
-        console.error("Error al vaciar wishlist:", error.message);
+        // Error silencioso
     }
 
     // Retornar wishlist vacía si hay error
@@ -78,61 +107,69 @@ export async function clearWishlist(token, usuarioId) {
 // -------- Items --------
 export async function addItemToWishlist(token, usuarioId, productoId, productoTitulo) {
     try {
-        // Agregar al backend
-        const res = await fetch(`${API}/wishlists/usuario/${usuarioId}/items`, {
+        // Primero intentar crear/obtener la wishlist para asegurar que existe
+        await createWishlistIfMissing(token, usuarioId);
+
+        // Usar el endpoint correcto del backend: POST /usuarios/{usuarioId}/wishlist/items/{productoId}
+        const res = await fetchWithRetry(`${API}/usuarios/${usuarioId}/wishlist/items/${productoId}`, {
             method: "POST",
             headers: authHeaders(token),
-            body: JSON.stringify({ productoId, productoTitulo }),
         });
 
         if (res.ok) {
             return await res.json();
         }
 
-        // Si hay error del servidor, lanzar excepción
-        const errorData = await res.json().catch(() => ({ message: 'Error del servidor' }));
-        throw new Error(errorData.message || 'Error al agregar a wishlist');
+        // Manejo específico de errores según status
+        let errorMessage = 'Error al agregar a wishlist';
+
+        if (res.status === 500) {
+            errorMessage = 'Error interno del servidor. Inténtalo más tarde.';
+        } else if (res.status === 404) {
+            errorMessage = 'Servicio no encontrado';
+        } else if (res.status === 401) {
+            errorMessage = 'No autorizado. Inicia sesión nuevamente.';
+        } else if (res.status === 400) {
+            const errorData = await res.json().catch(() => ({}));
+            errorMessage = errorData.message || 'Datos inválidos';
+        }
+
+        throw new Error(errorMessage);
     } catch (error) {
-        console.error("Error al agregar item a wishlist:", error.message);
-        throw error;
+        // Si el error ya es conocido, lo relanzamos
+        if (error.message.includes('Error interno del servidor') ||
+            error.message.includes('No autorizado') ||
+            error.message.includes('Servicio no encontrado')) {
+            throw error;
+        }
+
+        // Error de conexión
+        throw new Error('Error de conexión. Verifica tu internet.');
     }
 }
 
 export async function removeWishlistItem(token, usuarioId, productoId) {
     try {
         const res = await fetch(
-            `${API}/wishlists/usuario/${usuarioId}/items/${productoId}`,
+            `${API}/usuarios/${usuarioId}/wishlist/items/${productoId}`,
             { method: "DELETE", headers: authHeaders(token) }
         );
         if (res.ok) {
-            return await res.json();
+            // El backend retorna 204 No Content, así que retornamos una wishlist actualizada
+            return await getWishlist(token, usuarioId);
         }
 
         // Si hay error del servidor, lanzar excepción
         const errorData = await res.json().catch(() => ({ message: 'Error del servidor' }));
         throw new Error(errorData.message || 'Error al eliminar de wishlist');
     } catch (error) {
-        console.error("Error al eliminar item de wishlist:", error.message);
         throw error;
     }
 }
 
 // -------- Agregar todos al carrito --------
+// NOTA: Este endpoint no existe en el backend actual
+// La funcionalidad debe implementarse agregando items uno por uno
 export async function addAllToCart(token, usuarioId) {
-    try {
-        const res = await fetch(`${API}/wishlists/usuario/${usuarioId}/agregar-al-carrito`, {
-            method: "POST",
-            headers: authHeaders(token),
-        });
-        if (res.ok) {
-            return await res.json();
-        }
-
-        // Si hay error del servidor, lanzar excepción
-        const errorData = await res.json().catch(() => ({ message: 'Error del servidor' }));
-        throw new Error(errorData.message || 'Error al agregar todos al carrito');
-    } catch (error) {
-        console.error("Error al agregar todos al carrito:", error.message);
-        throw error;
-    }
+    throw new Error("Funcionalidad no disponible: agregar todos al carrito debe hacerse item por item");
 }
