@@ -16,6 +16,9 @@ import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import Checkout from "./pages/Checkout";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import AboutUs from "./pages/AboutUs";
+import Partners from "./pages/Partners";
+import Quality from "./pages/Quality";
 import "./App.css";
 
 export default function App() {
@@ -26,6 +29,9 @@ export default function App() {
         {/* Rutas públicas */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/partners" element={<Partners />} />
+        <Route path="/quality" element={<Quality />} />
 
         {/* Rutas de vendedor */}
         <Route

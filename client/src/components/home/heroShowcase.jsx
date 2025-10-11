@@ -1,6 +1,8 @@
+import { useNavigate } from "react-router-dom";
 import "../../styles/heroShowcase.css";
 
 export default function HeroShowcase() {
+    const navigate = useNavigate();
 
     const scrollToGames = () => {
         const section = document.getElementById("games-section");
@@ -30,6 +32,7 @@ export default function HeroShowcase() {
                 <article
                     className="promo-card"
                     style={{ backgroundImage: 'url(/showcase/studio.png)' }}
+                    onClick={() => navigate('/about-us')}
                 >
                     <div className="promo-card__content">
                         <h3>¿Quiénes somos?</h3>
@@ -40,6 +43,7 @@ export default function HeroShowcase() {
                 <article
                     className="promo-card"
                     style={{ backgroundImage: 'url(/showcase/service.png)' }}
+                    onClick={() => navigate('/partners')}
                 >
                     <div className="promo-card__content">
                         <h3>Trabajamos con los mejores</h3>
@@ -50,6 +54,7 @@ export default function HeroShowcase() {
                 <article
                     className="promo-card"
                     style={{ backgroundImage: 'url(/showcase/calidad.jpg)' }}
+                    onClick={() => navigate('/quality')}
                 >
                     <div className="promo-card__content">
                         <h3>Calidad garantizada</h3>
