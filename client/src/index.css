@@ -16,9 +16,12 @@
 }
 
 html,
-body,
-#root {
+body {
   height: 100%;
+}
+
+#root {
+  min-height: 100%;
 }
 
 body {
@@ -26,4 +29,3 @@ body {
   font-family: 'Montserrat', sans-serif;
   background-color: #f9f9f9;
 }
-
