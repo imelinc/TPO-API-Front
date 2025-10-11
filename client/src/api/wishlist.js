@@ -5,32 +5,6 @@ const authHeaders = (token) => ({
     Authorization: `Bearer ${token}`,
 });
 
-// -------- LocalStorage Helper (Fallback) --------
-const WISHLIST_KEY_PREFIX = "wishlist_";
-
-function getWishlistKey(usuarioId) {
-    return `${WISHLIST_KEY_PREFIX}${usuarioId}`;
-}
-
-function getLocalWishlist(usuarioId) {
-    try {
-        const data = localStorage.getItem(getWishlistKey(usuarioId));
-        if (!data) return { items: [] };
-        return JSON.parse(data);
-    } catch (error) {
-        console.error("Error al leer wishlist local:", error);
-        return { items: [] };
-    }
-}
-
-function saveLocalWishlist(usuarioId, wishlist) {
-    try {
-        localStorage.setItem(getWishlistKey(usuarioId), JSON.stringify(wishlist));
-    } catch (error) {
-        console.error("Error al guardar wishlist local:", error);
-    }
-}
-
 // -------- Wishlist --------
 export async function createWishlistIfMissing(token, usuarioId) {
     try {
@@ -54,16 +28,16 @@ export async function createWishlistIfMissing(token, usuarioId) {
             }
         }
     } catch (error) {
-        console.log("Backend no disponible, usando localStorage:", error.message);
+        console.error("Error al crear/obtener wishlist:", error.message);
     }
 
-    // Fallback a localStorage
-    return getLocalWishlist(usuarioId);
+    // Retornar wishlist vacía si hay error
+    return { items: [] };
 }
 
 export async function getWishlist(token, usuarioId) {
     try {
-        // Intentar con el backend primero
+        // Intentar con el backend
         const res = await fetch(`${API}/wishlists/usuario/${usuarioId}`, {
             headers: authHeaders(token),
         });
@@ -73,15 +47,15 @@ export async function getWishlist(token, usuarioId) {
         }
 
         if (res.status === 404) {
-            // Backend existe pero no hay wishlist, usar localStorage
-            return getLocalWishlist(usuarioId);
+            // Backend existe pero no hay wishlist, retornar vacía
+            return { items: [] };
         }
     } catch (error) {
-        console.log("Backend no disponible, usando localStorage:", error.message);
+        console.error("Error al obtener wishlist:", error.message);
     }
 
-    // Fallback a localStorage
-    return getLocalWishlist(usuarioId);
+    // Retornar wishlist vacía si hay error
+    return { items: [] };
 }
 
 export async function clearWishlist(token, usuarioId) {
@@ -94,19 +68,17 @@ export async function clearWishlist(token, usuarioId) {
             return await res.json();
         }
     } catch (error) {
-        console.log("Backend no disponible, usando localStorage:", error.message);
+        console.error("Error al vaciar wishlist:", error.message);
     }
 
-    // Fallback a localStorage
-    const emptyWishlist = { items: [] };
-    saveLocalWishlist(usuarioId, emptyWishlist);
-    return emptyWishlist;
+    // Retornar wishlist vacía si hay error
+    return { items: [] };
 }
 
 // -------- Items --------
 export async function addItemToWishlist(token, usuarioId, productoId, productoTitulo) {
     try {
-        // Intentar con el backend primero
+        // Agregar al backend
         const res = await fetch(`${API}/wishlists/usuario/${usuarioId}/items`, {
             method: "POST",
             headers: authHeaders(token),
@@ -116,27 +88,14 @@ export async function addItemToWishlist(token, usuarioId, productoId, productoTi
         if (res.ok) {
             return await res.json();
         }
+
+        // Si hay error del servidor, lanzar excepción
+        const errorData = await res.json().catch(() => ({ message: 'Error del servidor' }));
+        throw new Error(errorData.message || 'Error al agregar a wishlist');
     } catch (error) {
-        console.log("Backend no disponible, usando localStorage:", error.message);
+        console.error("Error al agregar item a wishlist:", error.message);
+        throw error;
     }
-
-    // Fallback a localStorage
-    const wishlist = getLocalWishlist(usuarioId);
-
-    // Verificar si el producto ya está en la wishlist
-    const exists = wishlist.items.some(item => item.productoId === productoId);
-    if (exists) {
-        throw new Error("El producto ya está en tu wishlist");
-    }
-
-    // Agregar el nuevo item con su título
-    wishlist.items.push({
-        productoId,
-        productoTitulo: productoTitulo || `Producto ${productoId}` // Usar título proporcionado o fallback
-    });
-
-    saveLocalWishlist(usuarioId, wishlist);
-    return wishlist;
 }
 
 export async function removeWishlistItem(token, usuarioId, productoId) {
@@ -148,15 +107,14 @@ export async function removeWishlistItem(token, usuarioId, productoId) {
         if (res.ok) {
             return await res.json();
         }
-    } catch (error) {
-        console.log("Backend no disponible, usando localStorage:", error.message);
-    }
 
-    // Fallback a localStorage
-    const wishlist = getLocalWishlist(usuarioId);
-    wishlist.items = wishlist.items.filter(item => item.productoId !== productoId);
-    saveLocalWishlist(usuarioId, wishlist);
-    return wishlist;
+        // Si hay error del servidor, lanzar excepción
+        const errorData = await res.json().catch(() => ({ message: 'Error del servidor' }));
+        throw new Error(errorData.message || 'Error al eliminar de wishlist');
+    } catch (error) {
+        console.error("Error al eliminar item de wishlist:", error.message);
+        throw error;
+    }
 }
 
 // -------- Agregar todos al carrito --------
@@ -169,11 +127,12 @@ export async function addAllToCart(token, usuarioId) {
         if (res.ok) {
             return await res.json();
         }
-    } catch (error) {
-        console.log("Backend no disponible para agregar al carrito directamente:", error.message);
-    }
 
-    // Fallback: devolver la wishlist para que el frontend maneje agregar al carrito
-    // La página tendrá que agregar cada item manualmente
-    return getLocalWishlist(usuarioId);
+        // Si hay error del servidor, lanzar excepción
+        const errorData = await res.json().catch(() => ({ message: 'Error del servidor' }));
+        throw new Error(errorData.message || 'Error al agregar todos al carrito');
+    } catch (error) {
+        console.error("Error al agregar todos al carrito:", error.message);
+        throw error;
+    }
 }
