@@ -5,6 +5,7 @@ import HomeGate from "./pages/HomeGate";
 import Dashboard from "./pages/Dashboard";
 import ProductForm from "./pages/ProductForm";
 import Navbar from "./components/layout/Navbar";
+import Footer from "./components/layout/Footer";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -19,9 +20,24 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import AboutUs from "./pages/AboutUs";
 import Partners from "./pages/Partners";
 import Quality from "./pages/Quality";
+import { useAuth } from "./context/AuthContext";
 import "./App.css";
 
 export default function App() {
+  const { user } = useAuth();
+
+  // Determinar si mostrar el footer
+  // Se muestra si: no hay usuario autenticado O el usuario es comprador
+  // No se muestra si: el usuario es vendedor o admin
+  const shouldShowFooter = () => {
+    if (!user) return true; // No autenticado -> mostrar footer
+
+    const rol = (user.rol || user.role || "").toString().toUpperCase().replace(/^ROLE_/, "");
+
+    // Solo NO mostrar si es VENDEDOR o ADMIN
+    return rol !== "VENDEDOR" && rol !== "ADMIN";
+  };
+
   return (
     <>
       <Navbar />
@@ -70,6 +86,7 @@ export default function App() {
         <Route path="/search" element={<UserRoute><Search /></UserRoute>} />
         <Route path="/producto/:id" element={<UserRoute><ProductDetail /></UserRoute>} />
       </Routes>
+      {shouldShowFooter() && <Footer />}
     </>
   );
 }

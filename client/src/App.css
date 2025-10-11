@@ -3,4 +3,16 @@
   padding: 0;
   max-width: none;
   width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Asegurar que el contenido principal ocupe el espacio disponible */
+#root>* {
+  flex-shrink: 0;
+}
+
+#root> :not(nav):not(footer) {
+  flex-grow: 1;
 }
