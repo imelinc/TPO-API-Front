@@ -35,13 +35,13 @@ export default function Footer() {
                 <div className="footer-section">
                     <h3>Síguenos</h3>
                     <div className="social-links">
-                        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
+                        <a href="https://facebook.com" target="_blank">
                             <i className="fab fa-facebook"></i> Facebook
                         </a>
-                        <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
+                        <a href="https://twitter.com" target="_blank">
                             <i className="fab fa-twitter"></i> Twitter
                         </a>
-                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
+                        <a href="https://instagram.com" target="_blank">
                             <i className="fab fa-instagram"></i> Instagram
                         </a>
                     </div>
