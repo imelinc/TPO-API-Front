@@ -28,9 +28,11 @@ export default function AboutUs() {
                     </p>
                 </section>
 
-                <div className="static-page__image-placeholder">
-                    <span>[ Espacio para imagen del equipo o instalaciones ]</span>
-                </div>
+                <img
+                    src="https://www.betterup.com/hubfs/Blog%20Images/developing-teams-team-collaborating.jpg"
+                    alt="Equipo de trabajo"
+                    className="static-page__image"
+                />
 
                 <section className="static-page__section">
                     <h2>Nuestra Misión</h2>
@@ -55,9 +57,12 @@ export default function AboutUs() {
                     </ul>
                 </section>
 
-                <div className="static-page__image-placeholder">
-                    <span>[ Espacio para imagen de la comunidad o eventos ]</span>
-                </div>
+                <img
+                    src="https://www.gameshub.com/wp-content/uploads/sites/5/2022/12/pax-west.jpg"
+                    alt="Evento de trabajo"
+                    className="static-page__image"
+                />
+
             </div>
         </div>
     );

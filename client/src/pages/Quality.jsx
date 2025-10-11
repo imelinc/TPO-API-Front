@@ -28,9 +28,13 @@ export default function Quality() {
                     </p>
                 </section>
 
-                <div className="static-page__image-placeholder">
-                    <span>[ Espacio para imagen de testing o control de calidad ]</span>
-                </div>
+                
+
+                <img
+                    src="https://static.tildacdn.one/tild6135-3234-4436-b161-356162383932/test-video-games-for.jpg"
+                    alt="Testing en PressPlay"
+                    className="static-page__image"
+                />
 
                 <section className="static-page__section">
                     <h2>Proceso de Selección</h2>
@@ -61,9 +65,11 @@ export default function Quality() {
                     </p>
                 </section>
 
-                <div className="static-page__image-placeholder">
-                    <span>[ Espacio para imagen de soporte al cliente ]</span>
-                </div>
+                <img
+                    src="https://www.thewowstyle.com/wp-content/uploads/2024/02/Customer-Service.webp"
+                    alt="Customer Service en PressPlay"
+                    className="static-page__image"
+                />
 
                 <section className="static-page__section">
                     <h2>Actualizaciones y Mantenimiento</h2>
@@ -87,9 +93,13 @@ export default function Quality() {
                     </p>
                 </section>
 
-                <div className="static-page__image-placeholder">
-                    <span>[ Espacio para imagen de la comunidad o testimonios ]</span>
-                </div>
+                
+
+                <img
+                    src="https://business-portal-bucket.s3.amazonaws.com/media/images/22STREAMERS1-videoSixteenByNineJumbo1600.original.jpg"
+                    alt="Comunidad PressPlay"
+                    className="static-page__image"
+                />
             </div>
         </div>
     );

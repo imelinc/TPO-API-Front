@@ -28,9 +28,13 @@ export default function Partners() {
                     </p>
                 </section>
 
-                <div className="static-page__image-placeholder">
-                    <span>[ Espacio para logos de partners / desarrolladoras ]</span>
-                </div>
+                
+
+                <img
+                    src="https://i.redd.it/az53dqt18br31.jpg"
+                    alt="Partners de trabajo"
+                    className="static-page__image"
+                />
 
                 <section className="static-page__section">
                     <h2>Distribución Oficial</h2>
@@ -57,9 +61,11 @@ export default function Partners() {
                     </ul>
                 </section>
 
-                <div className="static-page__image-placeholder">
-                    <span>[ Espacio para imagen de evento o colaboración ]</span>
-                </div>
+                <img
+                    src="../../public/pressplay-evento.jpg"
+                    alt="Evento PressPlay"
+                    className="static-page__image"
+                />
 
                 <section className="static-page__section">
                     <h2>Creciendo Juntos</h2>
