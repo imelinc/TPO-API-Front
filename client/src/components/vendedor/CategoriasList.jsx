@@ -72,21 +72,22 @@ export default function CategoriasList() {
         setMessage({ type: '', text: '' });
     };
 
+    const handleDelete = async (categoriaId) => {
+        if (!window.confirm('¿Estás seguro de eliminar esta categoría?')) {
+            return;
+        }
+
+        try {
+            await deleteCategoria(user?.token, categoriaId);
+            // Remover la categoría de la lista local sin mostrar mensaje
+            setCategorias(prev => prev.filter(c => c.id !== categoriaId));
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Error al eliminar la categoría' });
+        }
+    };
+
     if (loading) {
         return <div className="loading">Cargando categorías...</div>;
-        const handleDelete = async (categoriaId) => {
-            if (!window.confirm('¿Estás seguro de eliminar esta categoría?')) {
-                return;
-            }
-
-            try {
-                await deleteCategoria(user?.token, categoriaId);
-                // Remover la categoría de la lista local sin mostrar mensaje
-                setCategorias(prev => prev.filter(c => c.id !== categoriaId));
-            } catch (error) {
-                setMessage({ type: 'error', text: 'Error al eliminar la categoría' });
-            }
-        };
     }
 
     return (
@@ -157,17 +158,14 @@ export default function CategoriasList() {
                         <div key={categoria.id} className="categoria-card">
                             <div className="categoria-info">
                                 <h3 className="categoria-nombre">{categoria.nombre}</h3>
-                                <p className="categoria-id">ID: {categoria.id}</p>
                             </div>
-                            <div className="categoria-actions">
-                                <button
-                                    onClick={() => handleDelete(categoria.id)}
-                                    className="btn-delete"
-                                    title="Eliminar categoría"
-                                >
-                                    🗑️
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => handleDelete(categoria.id)}
+                                className="categoria-delete-btn"
+                                title="Eliminar categoría"
+                            >
+                                ×
+                            </button>
                         </div>
                     ))}
                 </div>
