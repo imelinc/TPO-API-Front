@@ -48,22 +48,32 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                 </div>
 
                 {/* Centro */}
-                <div className="search">
-                    <form onSubmit={onSubmit} role="search" aria-label="Buscar juegos">
-                        <input
-                            value={q}
-                            onChange={(e) => setQ(e.target.value)}
-                            placeholder="Buscar juegos, géneros, ofertas..."
-                            aria-label="Buscar"
-                        />
-                        <button type="submit" aria-label="Buscar">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <circle cx="11" cy="11" r="7" strokeWidth="2" />
-                                <line x1="21" y1="21" x2="16.65" y2="16.65" strokeWidth="2" />
-                            </svg>
-                        </button>
-                    </form>
-                </div>
+                {user && user.rol === "VENDEDOR" ? (
+                    <>
+                        <div className="navbar-vendedor-title">
+                            <h1>Panel de vendedor</h1>
+                            <p>Gestioná tu catálogo desde un solo lugar.</p>
+                        </div>
+                        <div></div> {/* Placeholder para mantener el grid */}
+                    </>
+                ) : (
+                    <div className="search">
+                        <form onSubmit={onSubmit} role="search" aria-label="Buscar juegos">
+                            <input
+                                value={q}
+                                onChange={(e) => setQ(e.target.value)}
+                                placeholder="Buscar juegos, géneros, ofertas..."
+                                aria-label="Buscar"
+                            />
+                            <button type="submit" aria-label="Buscar">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <circle cx="11" cy="11" r="7" strokeWidth="2" />
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65" strokeWidth="2" />
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                )}
 
                 {/* Derecha */}
                 <div className="actions">

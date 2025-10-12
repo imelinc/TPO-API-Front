@@ -21,11 +21,6 @@ export default function Dashboard() {
 
     return (
         <section className="dash-wrap">
-            <header className="dash-header">
-                <h1>Panel de vendedor</h1>
-                <p className="dash-sub">Gestioná tu catálogo desde un solo lugar.</p>
-            </header>
-
             <nav className="dash-tabs">
                 {TABS.map(t => (
                     <button
