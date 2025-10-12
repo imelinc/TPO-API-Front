@@ -38,6 +38,48 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.checkout-form input:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.checkout-form input.error,
+.checkout-form select.error {
+    border-color: #dc2626;
+}
+
+.checkout-form select {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.checkout-form select:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.expiry-inputs {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.expiry-inputs select {
+    flex: 1;
+}
+
+.error-message {
+    display: block;
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
 }
 
 .checkout-buttons {
@@ -63,11 +105,26 @@
 .pay-button {
     background-color: #4CAF50;
     color: white;
+    transition: background-color 0.2s;
+}
+
+.pay-button:hover:not(:disabled) {
+    background-color: #45a049;
+}
+
+.pay-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .cancel-button {
     background-color: #f5f5f5;
     color: #666;
+    transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+    background-color: #e5e5e5;
 }
 
 .lock-icon {
