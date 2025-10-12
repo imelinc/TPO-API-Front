@@ -23,7 +23,9 @@ export default function ProductList() {
             setLoading(true);
             setMessage({ type: '', text: '' });
             const data = await getVendedorProductos(user?.token);
-            setProductos(data);
+            // El backend devuelve directamente un array de ProductoDTO
+            const productosArray = Array.isArray(data) ? data : [];
+            setProductos(productosArray);
         } catch (error) {
             setMessage({ type: 'error', text: 'Error al cargar los productos' });
         } finally {

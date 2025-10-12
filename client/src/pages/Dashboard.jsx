@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProductList from "../components/vendedor/ProductList";
 import CategoriasList from "../components/vendedor/CategoriasList";
+import DescuentosList from "../components/vendedor/DescuentosList";
 import "../styles/dashboard.css";
 
 const TABS = [
@@ -61,36 +62,9 @@ export default function Dashboard() {
                 )}
 
                 {tab === "descuentos" && (
-                    <EmptyState
-                        title="Descuentos"
-                        hint="Configurá promociones y periodos de descuentos."
-                        actions={[
-                            { text: "Crear descuento", primary: true, disabled: true },
-                        ]}
-                    />
+                    <DescuentosList />
                 )}
             </div>
         </section>
-    );
-}
-
-function EmptyState({ title, hint, actions = [] }) {
-    return (
-        <div className="dash-empty">
-            <h2>{title}</h2>
-            <p>{hint}</p>
-            <div className="dash-empty-actions">
-                {actions.map((a, i) => (
-                    <button
-                        key={i}
-                        className={a.primary ? "btn-primary" : "btn-outline"}
-                        disabled={a.disabled}
-                        type="button"
-                    >
-                        {a.text}
-                    </button>
-                ))}
-            </div>
-        </div>
     );
 }

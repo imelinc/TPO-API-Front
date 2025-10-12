@@ -62,7 +62,7 @@ export default function Partners() {
                 </section>
 
                 <img
-                    src="../../public/pressplay-evento.jpg"
+                    src="../../pressplay-evento.jpg"
                     alt="Evento PressPlay"
                     className="static-page__image"
                 />
