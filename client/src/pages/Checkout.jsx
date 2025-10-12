@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCartWishlist } from '../context/CartWishlistContext';
 import { getUserId } from '../utils/userUtils';
 import { doCheckout } from '../api/cart';
 import { LockClosedIcon } from '@heroicons/react/24/solid';
@@ -9,6 +10,7 @@ import '../styles/checkout.css';
 const Checkout = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { refreshCartCount } = useCartWishlist();
     const token = user?.token;
     const usuarioId = getUserId(user);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -35,6 +37,12 @@ const Checkout = () => {
             setIsProcessing(true);
             // Completar la orden en el backend
             await doCheckout(token, usuarioId);
+
+            // Refrescar el contador del carrito (debería ser 0 ahora)
+            setTimeout(async () => {
+                await refreshCartCount();
+            }, 300);
+
             // Redirigir a la página de éxito
             navigate('/payment-success');
         } catch (error) {
