@@ -99,8 +99,8 @@
 }
 
 .filters-sticky {
-    position: sticky;
-    top: 12px;
+    /* position: sticky; */
+    /* top: 12px; */
     /* queda visible cuando scrolleás */
     z-index: 2;
 }
@@ -294,9 +294,5 @@
 @media (max-width: 640px) {
     .filters-grid {
         grid-template-columns: 1fr;
-    }
-
-    .filters-sticky {
-        top: 8px;
     }
 }

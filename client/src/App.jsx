@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import VendedorRoute from "./routes/VendedorRoute";
 import UserRoute from "./routes/UserRoute";
 import HomeGate from "./pages/HomeGate";
@@ -25,11 +25,16 @@ import "./App.css";
 
 export default function App() {
   const { user } = useAuth();
+  const location = useLocation();
 
   // Determinar si mostrar el footer
-  // Se muestra si: no hay usuario autenticado O el usuario es comprador
-  // No se muestra si: el usuario es vendedor o admin
+  // No se muestra en: Login, Register, o si el usuario es vendedor o admin
   const shouldShowFooter = () => {
+    // No mostrar en login/register
+    if (location.pathname === "/login" || location.pathname === "/register") {
+      return false;
+    }
+
     if (!user) return true; // No autenticado -> mostrar footer
 
     const rol = (user.rol || user.role || "").toString().toUpperCase().replace(/^ROLE_/, "");
