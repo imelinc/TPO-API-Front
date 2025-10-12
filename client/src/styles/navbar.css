@@ -52,17 +52,32 @@
     width: 100%;
     max-width: 560px;
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: auto 1fr auto;
     background: #f7f7f8;
     border: 1px solid var(--border);
     border-radius: 999px;
     overflow: hidden;
+    align-items: center;
+}
+
+.search-icon-left {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0 0 14px;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.search-icon-left svg {
+    height: 18px;
+    width: 18px;
 }
 
 .search input {
     border: 0;
     outline: 0;
-    padding: 12px 14px;
+    padding: 12px 8px;
     font-size: 14px;
     background: transparent;
     color: #111;
