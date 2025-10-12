@@ -76,12 +76,15 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                                 </svg>
                             </button>
 
-                            <button className="iconBtn" aria-label="Carrito" onClick={() => navigate("/cart")}>
+                            <button className="iconBtn icon-with-badge" aria-label="Carrito" onClick={() => navigate("/cart")}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <circle cx="9" cy="21" r="1" strokeWidth="2" />
                                     <circle cx="20" cy="21" r="1" strokeWidth="2" />
                                     <path strokeWidth="2" d="M1 1h4l2.68 12.39a2 2 0 0 0 2 1.61h8.72a2 2 0 0 0 2-1.61L23 6H6" />
                                 </svg>
+                                {cartCount > 0 && (
+                                    <span className="badge">{cartCount}</span>
+                                )}
                             </button>
                         </>
                     )}

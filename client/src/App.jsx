@@ -21,11 +21,13 @@ import AboutUs from "./pages/AboutUs";
 import Partners from "./pages/Partners";
 import Quality from "./pages/Quality";
 import { useAuth } from "./context/AuthContext";
+import { useCartWishlist } from "./context/CartWishlistContext";
 import "./App.css";
 
 export default function App() {
   const { user } = useAuth();
   const location = useLocation();
+  const { cartCount, wishlistCount } = useCartWishlist();
 
   // Determinar si mostrar el footer
   // No se muestra en: Login, Register, o si el usuario es vendedor o admin
@@ -45,7 +47,7 @@ export default function App() {
 
   return (
     <>
-      <Navbar />
+      <Navbar cartCount={cartCount} wishlistCount={wishlistCount} />
       <Routes>
         {/* Rutas públicas */}
         <Route path="/login" element={<Login />} />

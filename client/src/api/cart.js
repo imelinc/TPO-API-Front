@@ -23,7 +23,6 @@ export async function getCart(token, usuarioId) {
     });
     if (!res.ok) throw new Error("No se pudo obtener el carrito");
     const data = await res.json();
-    console.log('Carrito recibido:', data);
     return data;
 }
 
@@ -38,7 +37,6 @@ export async function clearCart(token, usuarioId) {
 
 // -------- Ítems --------
 export async function addItemToCart(token, usuarioId, { productoId, cantidad, precio }) {
-    console.log('Enviando al carrito:', { productoId, cantidad, precio });
     const res = await fetch(`${API}/carritos/usuario/${usuarioId}/items`, {
         method: "POST",
         headers: authHeaders(token),

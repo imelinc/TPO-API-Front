@@ -108,6 +108,11 @@
     width: 20px;
 }
 
+/* Contenedor con badge */
+.icon-with-badge {
+    position: relative;
+}
+
 .badge {
     position: absolute;
     top: -6px;
@@ -124,6 +129,8 @@
     align-items: center;
     justify-content: center;
     line-height: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
 }
 
 @media (max-width: 768px) {

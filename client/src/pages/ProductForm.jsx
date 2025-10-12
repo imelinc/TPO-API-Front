@@ -37,10 +37,7 @@ export default function ProductForm() {
 
     const loadCategorias = async () => {
         try {
-            console.log('Token disponible:', !!user?.token);
-            console.log('Cargando categorías...');
             const data = await getAllCategorias(user?.token);
-            console.log('Categorías cargadas:', data);
             setCategorias(data);
         } catch (error) {
             console.error('Error al cargar categorías:', error);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useCartWishlist } from "../context/CartWishlistContext";
 import {
     getWishlist,
     removeWishlistItem,
@@ -16,6 +17,7 @@ import "../styles/wishlist.css";
 
 export default function Wishlist() {
     const { user } = useAuth();
+    const { refreshWishlistCount, refreshCartCount } = useCartWishlist();
     const token = user?.token;
     const usuarioId = getUserId(user);
     const buyer = isBuyer(user);
@@ -76,6 +78,8 @@ export default function Wishlist() {
             setWishlist(updated);
             // Remover el item de enrichedItems
             setEnrichedItems(prev => prev.filter(item => item.productoId !== productoId));
+            // Refrescar contador
+            await refreshWishlistCount();
         } catch (e) {
             setMsg(String(e.message ?? e));
             load();
@@ -88,6 +92,8 @@ export default function Wishlist() {
             setWishlist(updated);
             setEnrichedItems([]);
             setMsg("Wishlist vaciada correctamente");
+            // Refrescar contador
+            await refreshWishlistCount();
         } catch (e) {
             setMsg(String(e.message ?? e));
         }
@@ -129,9 +135,14 @@ export default function Wishlist() {
                 try {
                     await clearWishlist(token, usuarioId);
                     setMsg(`${successCount} producto(s) agregado(s) al carrito y wishlist vaciada${failCount > 0 ? ` (${failCount} fallaron)` : ''}`);
+                    // Refrescar contadores
+                    await refreshCartCount();
+                    await refreshWishlistCount();
                     navigate('/cart'); // Redirigir al carrito después de agregar los productos
                 } catch (error) {
                     setMsg(`${successCount} producto(s) agregado(s) al carrito pero no se pudo vaciar la wishlist`);
+                    // Refrescar contador del carrito aunque falle la wishlist
+                    await refreshCartCount();
                 }
             } else {
                 setMsg("No se pudo agregar ningún producto al carrito");

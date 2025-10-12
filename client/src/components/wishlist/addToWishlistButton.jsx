@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { addItemToWishlist } from "../../api/wishlist";
 import { useAuth } from "../../context/AuthContext";
+import { useCartWishlist } from "../../context/CartWishlistContext";
 import { isBuyer, getUserId } from "../../utils/userUtils";
 import { useNavigate } from "react-router-dom";
 
 export default function AddToWishlistButton({ productoId, producto, onAdded }) {
     const { user } = useAuth();
+    const { refreshWishlistCount } = useCartWishlist();
     const token = user?.token;
     const usuarioId = getUserId(user);
     const buyer = isBuyer(user);
@@ -21,6 +23,13 @@ export default function AddToWishlistButton({ productoId, producto, onAdded }) {
             setLoading(true);
             // addItemToWishlist ya maneja la creación automática de la wishlist
             await addItemToWishlist(token, usuarioId, productoId, producto?.titulo);
+
+            // Pequeño delay para asegurar que el backend haya procesado todo
+            setTimeout(async () => {
+                // Refrescar el contador de wishlist
+                await refreshWishlistCount();
+            }, 300);
+
             onAdded?.();
             navigate('/wishlist');
         } catch (e) {

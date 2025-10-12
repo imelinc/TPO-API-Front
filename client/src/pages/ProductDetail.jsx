@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { getProducto } from "../api/products";
 import { useAuth } from "../context/AuthContext";
+import { useCartWishlist } from "../context/CartWishlistContext";
 import { addItemToCart, createCartIfMissing } from "../api/cart";
 import { addItemToWishlist } from "../api/wishlist";
 import { getUserId } from "../utils/userUtils";
@@ -12,6 +13,7 @@ export default function ProductDetail() {
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useAuth();
+    const { refreshCartCount, refreshWishlistCount } = useCartWishlist();
 
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -114,6 +116,12 @@ export default function ProductDetail() {
                 cantidad: 1,
                 precio: precioFinal // Cambiado a 'precio' para que coincida con la API
             });
+
+            // Refrescar el contador del carrito
+            setTimeout(async () => {
+                await refreshCartCount();
+            }, 300);
+
             navigate("/cart");
         } catch (error) {
             alert("Error al agregar al carrito: " + error.message);
@@ -138,6 +146,12 @@ export default function ProductDetail() {
         try {
             // addItemToWishlist ya maneja la creación automática de la wishlist
             await addItemToWishlist(token, userId, id);
+
+            // Refrescar el contador de wishlist
+            setTimeout(async () => {
+                await refreshWishlistCount();
+            }, 300);
+
             alert("Producto agregado a la wishlist");
         } catch (error) {
             alert("Error al agregar a la wishlist: " + error.message);

@@ -92,18 +92,13 @@ export default function DescuentosList() {
                 descripcion: formData.descripcion || 'Descuento especial'
             };
 
-            console.log('🔵 CREAR - Producto ID:', selectedProducto.id);
-            console.log('🔵 CREAR - Datos:', descuentoData);
-
             const resultado = await createDescuento(user?.token, selectedProducto.id, descuentoData);
-            console.log('✅ CREAR - Resultado:', resultado);
 
             setMessage({ type: 'success', text: 'Descuento creado exitosamente' });
             handleCloseModal();
             setTimeout(() => loadProductos(), 500);
         } catch (error) {
-            console.error('❌ CREAR - Error:', error);
-            console.error('❌ CREAR - Mensaje:', error.message);
+            console.error('Error al crear descuento:', error);
             setMessage({ type: 'error', text: error.message || 'Error al crear el descuento' });
         }
     }; const handleDeleteDescuento = async () => {
@@ -114,12 +109,7 @@ export default function DescuentosList() {
         }
 
         try {
-            console.log('🔴 ELIMINAR - Producto ID:', selectedProducto.id);
-            console.log('🔴 ELIMINAR - Descuento ID:', descuentoCompleto.id);
-            console.log('🔴 ELIMINAR - Descuento completo:', descuentoCompleto);
-
             await deleteDescuento(user?.token, selectedProducto.id, descuentoCompleto.id);
-            console.log('✅ ELIMINAR - Exitoso');
 
             setMessage({ type: 'success', text: 'Descuento eliminado exitosamente' });
             handleCloseModal();

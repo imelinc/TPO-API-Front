@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useCartWishlist } from "../context/CartWishlistContext";
 import { useNavigate } from "react-router-dom";
 import {
     createCartIfMissing,
@@ -19,6 +20,7 @@ import "../styles/cart.css";
 export default function Cart() {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { refreshCartCount } = useCartWishlist();
     const token = user?.token;
     const usuarioId = getUserId(user);
     const buyer = isBuyer(user);
@@ -114,6 +116,8 @@ export default function Cart() {
             setCarrito(updated);
             // Remover el item de enrichedItems
             setEnrichedItems(prev => prev.filter(item => item.productoId !== productoId));
+            // Refrescar contador
+            await refreshCartCount();
         } catch (e) {
             setMsg(String(e.message ?? e));
             load();
@@ -125,6 +129,8 @@ export default function Cart() {
             const updated = await clearCart(token, usuarioId);
             setCarrito(updated);
             setEnrichedItems([]);
+            // Refrescar contador
+            await refreshCartCount();
         } catch (e) {
             setMsg(String(e.message ?? e));
         }

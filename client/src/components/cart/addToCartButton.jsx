@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { addItemToCart, createCartIfMissing } from "../../api/cart";
 import { useAuth } from "../../context/AuthContext";
+import { useCartWishlist } from "../../context/CartWishlistContext";
 import { isBuyer, getUserId } from "../../utils/userUtils";
 
 export default function AddToCartButton({ productoId, cantidad = 1, precio, tieneDescuento = false, precioConDescuento, onAdded }) {
     const { user } = useAuth();
+    const { refreshCartCount } = useCartWishlist();
     const token = user?.token;
     const usuarioId = getUserId(user);
     const buyer = isBuyer(user);
@@ -26,6 +28,13 @@ export default function AddToCartButton({ productoId, cantidad = 1, precio, tien
                 cantidad,
                 precioUnitario: precio
             });
+
+            // Pequeño delay para asegurar que el backend haya procesado todo
+            setTimeout(async () => {
+                // Refrescar el contador del carrito
+                await refreshCartCount();
+            }, 300);
+
             onAdded?.();
         } catch (e) {
             alert(String(e.message ?? e));
