@@ -48,7 +48,7 @@
 
 .descuento-card.has-discount {
     border-color: #10b981;
-    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+    background: #f0fdf4;
 }
 
 .descuento-card.has-discount:hover {
@@ -60,7 +60,7 @@
     position: absolute;
     top: 12px;
     right: 12px;
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    background: #ef4444;
     color: white;
     padding: 0.5rem 1rem;
     border-radius: 8px;
@@ -92,7 +92,7 @@
     align-items: center;
     justify-content: center;
     font-size: 4rem;
-    background: linear-gradient(135deg, #e5e7eb 0%, #f3f4f6 100%);
+    background: #e5e7eb;
 }
 
 /* Info del producto */

@@ -169,7 +169,7 @@
     min-height: 44px;
     border: none;
     border-radius: 12px;
-    background: linear-gradient(90deg, var(--primary, #2563eb), var(--primary-dark, #1d4ed8));
+    background: var(--primary, #2563eb);
     color: #fff;
     font-weight: 700;
     cursor: pointer;

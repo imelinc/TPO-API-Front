@@ -89,7 +89,7 @@
 /* ===== Filtros bonitos ===== */
 .filters-card {
     position: relative;
-    background: linear-gradient(180deg, rgba(255, 255, 255, .9), rgba(255, 255, 255, .85));
+    background: rgba(255, 255, 255, .9);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 16px;
@@ -272,7 +272,7 @@
 
 /* Estado activo */
 .ui-switch input:checked+.track {
-    background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+    background: var(--primary);
     border-color: transparent;
 }
 

@@ -139,7 +139,7 @@
 }
 
 .users-stats {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #007bff;
     padding: 1.5rem;
     border-radius: 10px;
     color: white;
@@ -277,7 +277,7 @@
 }
 
 .orders-stats {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    background: #007bff;
     padding: 1.5rem;
     border-radius: 10px;
     color: white;
@@ -381,7 +381,7 @@
 }
 
 .order-items-count {
-    background: #007bff;
+    background: #000000;
     color: white;
     padding: 0.3rem 0.7rem;
     border-radius: 12px;
