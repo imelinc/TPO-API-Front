@@ -108,6 +108,24 @@
     gap: 0.25rem;
 }
 
+.product-vendor {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.vendor-badge {
+    display: inline-block;
+    background: #007bff;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .product-actions {
     position: absolute;
     top: 0.5rem;

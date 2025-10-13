@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getVendedorProductos, deleteProducto } from '../../api/vendedor';
+import { getUsuarioById } from '../../api/usuarios';
 import StatusMessage from '../common/StatusMessage';
 import '../../styles/productList.css';
 
@@ -9,6 +10,7 @@ export default function ProductList() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [productos, setProductos] = useState([]);
+    const [vendedores, setVendedores] = useState({}); // Cache de vendedores {id: {nombre, apellido}}
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState({ type: '', text: '' });
 
@@ -26,6 +28,11 @@ export default function ProductList() {
             // El backend devuelve directamente un array de ProductoDTO
             const productosArray = Array.isArray(data) ? data : [];
             setProductos(productosArray);
+
+            // Si es ADMIN, cargar información de los vendedores
+            if (user?.rol === "ADMIN") {
+                await loadVendedores(productosArray);
+            }
         } catch (error) {
             setMessage({ type: 'error', text: 'Error al cargar los productos' });
         } finally {
@@ -33,8 +40,43 @@ export default function ProductList() {
         }
     };
 
+    const loadVendedores = async (productosArray) => {
+        try {
+            // Obtener IDs únicos de vendedores
+            const vendedorIds = [...new Set(productosArray.map(p => p.vendedorId).filter(Boolean))];
+
+            // Cargar información de cada vendedor
+            const vendedoresData = {};
+            await Promise.all(
+                vendedorIds.map(async (vendedorId) => {
+                    try {
+                        const vendedor = await getUsuarioById(user?.token, vendedorId);
+                        vendedoresData[vendedorId] = {
+                            nombre: vendedor.nombre,
+                            apellido: vendedor.apellido
+                        };
+                    } catch (error) {
+                        console.error(`Error al cargar vendedor ${vendedorId}:`, error);
+                        vendedoresData[vendedorId] = {
+                            nombre: 'Vendedor',
+                            apellido: `#${vendedorId}`
+                        };
+                    }
+                })
+            );
+
+            setVendedores(vendedoresData);
+        } catch (error) {
+            console.error('Error al cargar vendedores:', error);
+        }
+    };
+
     const handleEdit = (productoId) => {
-        navigate(`/dashboard/producto/editar/${productoId}`);
+        // Determinar la ruta según el rol del usuario
+        const editPath = user?.rol === "ADMIN"
+            ? `/admin/producto/editar/${productoId}`
+            : `/dashboard/producto/editar/${productoId}`;
+        navigate(editPath);
     };
 
     const handleDelete = async (productoId) => {
@@ -44,10 +86,15 @@ export default function ProductList() {
 
         try {
             await deleteProducto(user?.token, productoId);
-            // Remover el producto de la lista local sin mostrar mensaje
+            // Remover el producto de la lista local y mostrar mensaje de éxito
             setProductos(prev => prev.filter(p => p.id !== productoId));
+            setMessage({ type: 'success', text: 'Producto eliminado correctamente' });
+            // Auto-ocultar mensaje después de 3 segundos
+            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
         } catch (error) {
             setMessage({ type: 'error', text: 'Error al eliminar el producto' });
+            // Auto-ocultar mensaje de error después de 5 segundos
+            setTimeout(() => setMessage({ type: '', text: '' }), 5000);
         }
     };
 
@@ -66,7 +113,11 @@ export default function ProductList() {
     return (
         <div className="product-list-container">
             {message.text && (
-                <StatusMessage type={message.type} message={message.text} />
+                <StatusMessage
+                    type={message.type}
+                    message={message.text}
+                    onClose={() => setMessage({ type: '', text: '' })}
+                />
             )}
 
             {productos.length === 0 ? (
@@ -123,9 +174,12 @@ export default function ProductList() {
                                     </div>
                                 </div>
 
-                                {producto.imagenes && producto.imagenes.length > 1 && (
-                                    <div className="product-images-count">
-                                        📷 {producto.imagenes.length} imágenes
+                                {/* Mostrar vendedor solo si es ADMIN */}
+                                {user?.rol === "ADMIN" && producto.vendedorId && vendedores[producto.vendedorId] && (
+                                    <div className="product-vendor">
+                                        <span className="vendor-badge">
+                                            Vendedor: {vendedores[producto.vendedorId].nombre} {vendedores[producto.vendedorId].apellido}
+                                        </span>
                                     </div>
                                 )}
                             </div>

@@ -180,9 +180,10 @@ export default function ProductForm() {
                 }
             }
 
-            // Redirigir después de un breve delay
+            // Redirigir después de un breve delay según el rol
             setTimeout(() => {
-                navigate('/dashboard');
+                const redirectPath = user?.rol === "ADMIN" ? '/admin' : '/dashboard';
+                navigate(redirectPath);
             }, 1500);
 
         } catch (error) {
@@ -196,7 +197,8 @@ export default function ProductForm() {
     };
 
     const handleCancel = () => {
-        navigate('/dashboard');
+        const redirectPath = user?.rol === "ADMIN" ? '/admin' : '/dashboard';
+        navigate(redirectPath);
     };
 
     if (loading && isEdit) {

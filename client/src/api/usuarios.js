@@ -76,3 +76,27 @@ export async function degradarUsuario(token, usuarioId) {
         throw error;
     }
 }
+
+/**
+ * Obtener un usuario por ID
+ * GET /usuarios/{id}
+ */
+export async function getUsuarioById(token, usuarioId) {
+    try {
+        const response = await fetch(`${API_URL}/usuarios/${usuarioId}`, {
+            method: "GET",
+            headers: authHeaders(token),
+            credentials: "include",
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || "Error al obtener usuario");
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error al obtener usuario:', error);
+        throw error;
+    }
+}
