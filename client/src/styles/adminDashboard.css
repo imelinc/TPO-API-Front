@@ -1,7 +1,8 @@
 /* Admin Dashboard - Panel de Administración */
 
 .admin-dash-wrap {
-    max-width: 1400px;
+    max-width: 95%;
+    width: 100%;
     margin: 2rem auto;
     padding: 0 2rem;
 }
@@ -242,19 +243,24 @@
     color: white;
 }
 
-.btn-promote:hover {
+.btn-promote:hover:not(:disabled) {
     background: #218838;
     transform: translateY(-2px);
 }
 
 .btn-demote {
-    background: #ffc107;
-    color: #000;
+    background: #dc3545;
+    color: white;
 }
 
-.btn-demote:hover {
-    background: #e0a800;
+.btn-demote:hover:not(:disabled) {
+    background: #c82333;
     transform: translateY(-2px);
+}
+
+.btn-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .no-action {

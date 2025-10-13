@@ -49,10 +49,14 @@ export default function UsersList() {
                 type: "success",
                 text: `${usuario.username} ha sido promovido a ADMIN`
             });
+            // Auto-ocultar mensaje después de 3 segundos
+            setTimeout(() => setMessage(null), 3000);
             fetchUsuarios(pagination.page); // Recargar la página actual
         } catch (error) {
             const errorMsg = error.message || "Error al promover usuario";
             setMessage({ type: "error", text: errorMsg });
+            // Auto-ocultar mensaje de error después de 2 segundos
+            setTimeout(() => setMessage(null), 2000);
         }
     };
 
@@ -65,10 +69,14 @@ export default function UsersList() {
                 type: "success",
                 text: `${usuario.username} ha sido degradado a VENDEDOR`
             });
+            // Auto-ocultar mensaje después de 3 segundos
+            setTimeout(() => setMessage(null), 3000);
             fetchUsuarios(pagination.page);
         } catch (error) {
             const errorMsg = error.message || "Error al degradar usuario";
             setMessage({ type: "error", text: errorMsg });
+            // Auto-ocultar mensaje de error después de 5 segundos
+            setTimeout(() => setMessage(null), 5000);
         }
     };
 
@@ -136,16 +144,17 @@ export default function UsersList() {
                                             className="btn-action btn-promote"
                                             title="Promover a ADMIN"
                                         >
-                                            ⬆️ Promover
+                                            Promover
                                         </button>
                                     )}
                                     {usuario.rol === "ADMIN" && (
                                         <button
                                             onClick={() => handleDegradar(usuario)}
                                             className="btn-action btn-demote"
-                                            title="Degradar a VENDEDOR"
+                                            title={usuario.id === 1 ? "No se puede degradar al administrador principal" : "Degradar a VENDEDOR"}
+                                            disabled={usuario.id === 1}
                                         >
-                                            ⬇️ Degradar
+                                            Degradar
                                         </button>
                                     )}
                                     {usuario.rol === "COMPRADOR" && (
