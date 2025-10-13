@@ -1,8 +1,10 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import VendedorRoute from "./routes/VendedorRoute";
+import AdminRoute from "./routes/AdminRoute";
 import UserRoute from "./routes/UserRoute";
 import HomeGate from "./pages/HomeGate";
 import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import ProductForm from "./pages/ProductForm";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
@@ -55,6 +57,32 @@ export default function App() {
         <Route path="/about-us" element={<AboutUs />} />
         <Route path="/partners" element={<Partners />} />
         <Route path="/quality" element={<Quality />} />
+
+        {/* Rutas de administrador */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/producto/crear"
+          element={
+            <AdminRoute>
+              <ProductForm />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/producto/editar/:id"
+          element={
+            <AdminRoute>
+              <ProductForm />
+            </AdminRoute>
+          }
+        />
 
         {/* Rutas de vendedor */}
         <Route

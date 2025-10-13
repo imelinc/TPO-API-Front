@@ -48,7 +48,15 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                 </div>
 
                 {/* Centro */}
-                {user && user.rol === "VENDEDOR" ? (
+                {user && user.rol === "ADMIN" ? (
+                    <>
+                        <div className="navbar-vendedor-title">
+                            <h1>Panel de Administración</h1>
+                            <p>Gestión completa del sistema.</p>
+                        </div>
+                        <div></div> {/* Placeholder para mantener el grid */}
+                    </>
+                ) : user && user.rol === "VENDEDOR" ? (
                     <>
                         <div className="navbar-vendedor-title">
                             <h1>Panel de vendedor</h1>
@@ -83,8 +91,8 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
 
                 {/* Derecha */}
                 <div className="actions">
-                    {/* Solo mostrar botones de wishlist y carrito si el usuario no es vendedor */}
-                    {(!user || user.rol !== "VENDEDOR") && (
+                    {/* Solo mostrar botones de wishlist y carrito si el usuario no es vendedor ni admin */}
+                    {(!user || (user.rol !== "VENDEDOR" && user.rol !== "ADMIN")) && (
                         <>
                             <button className="iconBtn" aria-label="Wishlist" onClick={() => navigate("/wishlist")}>
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -131,6 +139,57 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                                 </div>
 
                                 <div className="user-menu-divider"></div>
+
+                                {user.rol === "ADMIN" && (
+                                    <div
+                                        className="user-item"
+                                        onClick={() => {
+                                            setOpen(false);
+                                            navigate("/admin");
+                                        }}
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <rect x="3" y="3" width="7" height="7" />
+                                            <rect x="14" y="3" width="7" height="7" />
+                                            <rect x="14" y="14" width="7" height="7" />
+                                            <rect x="3" y="14" width="7" height="7" />
+                                        </svg>
+                                        Panel de Admin
+                                    </div>
+                                )}
+
+                                {user.rol === "VENDEDOR" && (
+                                    <div
+                                        className="user-item"
+                                        onClick={() => {
+                                            setOpen(false);
+                                            navigate("/dashboard");
+                                        }}
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <rect x="3" y="3" width="7" height="7" />
+                                            <rect x="14" y="3" width="7" height="7" />
+                                            <rect x="14" y="14" width="7" height="7" />
+                                            <rect x="3" y="14" width="7" height="7" />
+                                        </svg>
+                                        Dashboard
+                                    </div>
+                                )}
+
+                                {(user.rol === "COMPRADOR" || !user.rol) && (
+                                    <div
+                                        className="user-item"
+                                        onClick={() => {
+                                            setOpen(false);
+                                            navigate("/orders");
+                                        }}
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.4 5M17 13l1.4 5M9 21a1 1 0 100-2 1 1 0 000 2zM20 21a1 1 0 100-2 1 1 0 000 2z" />
+                                        </svg>
+                                        Mis Órdenes
+                                    </div>
+                                )}
 
                                 <div
                                     className="user-item"
