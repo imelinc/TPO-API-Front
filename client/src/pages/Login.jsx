@@ -36,8 +36,13 @@ export default function Login() {
 
             setMsg({ type: "success", text: "Inicio de sesión exitoso. Redirigiendo..." });
 
-            // Vendedores al dashboard, compradores a donde estaban
-            const redirectTo = data.user.rol === "VENDEDOR" ? "/dashboard" : redirect;
+            // Redirigir según el rol
+            let redirectTo = redirect;
+            if (data.user.rol === "ADMIN") {
+                redirectTo = "/admin";
+            } else if (data.user.rol === "VENDEDOR") {
+                redirectTo = "/dashboard";
+            }
             navigate(redirectTo, { replace: true });
         } catch (err) {
             setMsg({ type: "error", text: err.message || "Credenciales inválidas" });

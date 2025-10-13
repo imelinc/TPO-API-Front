@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { getAllUsuarios, promoverUsuario, degradarUsuario } from "../../api/usuarios";
+import { useAuth } from "../../context/AuthContext";
 import StatusMessage from "../common/StatusMessage";
 
 export default function UsersList() {
+    const { user } = useAuth();
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState(null);
@@ -15,7 +17,7 @@ export default function UsersList() {
     const fetchUsuarios = async (page = 0) => {
         try {
             setLoading(true);
-            const data = await getAllUsuarios(page, 20);
+            const data = await getAllUsuarios(user.token, page, 20);
             setUsuarios(data.content || []);
             setPagination({
                 page: data.number,
@@ -25,7 +27,7 @@ export default function UsersList() {
         } catch (error) {
             setMessage({
                 type: "error",
-                text: error.response?.data?.message || "Error al cargar usuarios"
+                text: error.message || "Error al cargar usuarios"
             });
         } finally {
             setLoading(false);
@@ -33,21 +35,23 @@ export default function UsersList() {
     };
 
     useEffect(() => {
-        fetchUsuarios();
-    }, []);
+        if (user?.token) {
+            fetchUsuarios();
+        }
+    }, [user]);
 
     const handlePromover = async (usuario) => {
         if (!window.confirm(`¿Promover a ${usuario.username} a ADMIN?`)) return;
 
         try {
-            await promoverUsuario(usuario.id);
+            await promoverUsuario(user.token, usuario.id);
             setMessage({
                 type: "success",
                 text: `${usuario.username} ha sido promovido a ADMIN`
             });
             fetchUsuarios(pagination.page); // Recargar la página actual
         } catch (error) {
-            const errorMsg = error.response?.data?.message || "Error al promover usuario";
+            const errorMsg = error.message || "Error al promover usuario";
             setMessage({ type: "error", text: errorMsg });
         }
     };
@@ -56,14 +60,14 @@ export default function UsersList() {
         if (!window.confirm(`¿Degradar a ${usuario.username} a VENDEDOR?`)) return;
 
         try {
-            await degradarUsuario(usuario.id);
+            await degradarUsuario(user.token, usuario.id);
             setMessage({
                 type: "success",
                 text: `${usuario.username} ha sido degradado a VENDEDOR`
             });
             fetchUsuarios(pagination.page);
         } catch (error) {
-            const errorMsg = error.response?.data?.message || "Error al degradar usuario";
+            const errorMsg = error.message || "Error al degradar usuario";
             setMessage({ type: "error", text: errorMsg });
         }
     };

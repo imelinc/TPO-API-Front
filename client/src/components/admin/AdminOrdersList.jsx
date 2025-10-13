@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
 import StatusMessage from "../common/StatusMessage";
 
 const API_URL = "http://localhost:8080";
 
 export default function AdminOrdersList() {
+    const { user } = useAuth();
     const [ordenes, setOrdenes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState(null);
@@ -21,6 +23,7 @@ export default function AdminOrdersList() {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${user.token}`,
                 },
                 credentials: "include",
             });
@@ -48,8 +51,10 @@ export default function AdminOrdersList() {
     };
 
     useEffect(() => {
-        fetchAllOrdenes();
-    }, []);
+        if (user?.token) {
+            fetchAllOrdenes();
+        }
+    }, [user]);
 
     const formatFecha = (fecha) => {
         const date = new Date(fecha);

@@ -8,11 +8,11 @@ import AdminOrdersList from "../components/admin/AdminOrdersList";
 import "../styles/adminDashboard.css";
 
 const TABS = [
-    { key: "usuarios", label: "Usuarios", icon: "👥" },
-    { key: "productos", label: "Productos", icon: "🎮" },
-    { key: "ordenes", label: "Órdenes", icon: "📦" },
-    { key: "categorias", label: "Categorías", icon: "📁" },
-    { key: "descuentos", label: "Descuentos", icon: "💰" },
+    { key: "usuarios", label: "Usuarios" },
+    { key: "productos", label: "Productos" },
+    { key: "ordenes", label: "Órdenes" },
+    { key: "categorias", label: "Categorías" },
+    { key: "descuentos", label: "Descuentos" },
 ];
 
 export default function AdminDashboard() {
@@ -25,11 +25,6 @@ export default function AdminDashboard() {
 
     return (
         <section className="admin-dash-wrap">
-            <div className="admin-header">
-                <h1>Panel de Administración</h1>
-                <p className="admin-subtitle">Gestión completa del sistema</p>
-            </div>
-
             <nav className="admin-tabs">
                 {TABS.map(t => (
                     <button
@@ -37,7 +32,6 @@ export default function AdminDashboard() {
                         className={`admin-tab-btn ${tab === t.key ? "is-active" : ""}`}
                         onClick={() => setTab(t.key)}
                     >
-                        <span className="tab-icon">{t.icon}</span>
                         <span className="tab-label">{t.label}</span>
                     </button>
                 ))}

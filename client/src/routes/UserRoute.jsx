@@ -12,5 +12,9 @@ export default function UserRoute({ children }) {
         return <Navigate to="/dashboard" replace />;
     }
 
+    if (user.rol === "ADMIN") {
+        return <Navigate to="/admin" replace />;
+    }
+
     return children;
 }
