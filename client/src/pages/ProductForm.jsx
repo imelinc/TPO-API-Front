@@ -27,6 +27,7 @@ export default function ProductForm() {
     });
 
     const [imageUrls, setImageUrls] = useState(['']); // Array para manejar múltiples URLs
+    const [originalImageUrls, setOriginalImageUrls] = useState([]); // Para rastrear imágenes originales
 
     useEffect(() => {
         loadCategorias();
@@ -80,6 +81,7 @@ export default function ProductForm() {
             if (urls.length === 0) urls.push('');
 
             setImageUrls(urls);
+            setOriginalImageUrls([...urls]); // Guardar copia de las imágenes originales
 
         } catch (error) {
             setMessage({ type: 'error', text: 'Error al cargar el producto' });
@@ -106,8 +108,26 @@ export default function ProductForm() {
         setImageUrls([...imageUrls, '']);
     };
 
-    const removeImageUrlField = (index) => {
+    const removeImageUrlField = async (index) => {
         if (imageUrls.length > 1) {
+            const urlToRemove = imageUrls[index];
+
+            // Si estamos en modo edición y la imagen existía originalmente, eliminarla del servidor
+            if (isEdit && urlToRemove && originalImageUrls.includes(urlToRemove)) {
+                try {
+                    // Buscar el ID de la imagen en formData.imagenes
+                    const imagen = formData.imagenes.find(img => img.url === urlToRemove);
+                    if (imagen && imagen.id) {
+                        await deleteImagenFromProducto(user?.token, id, imagen.id);
+                        console.log('Imagen eliminada del servidor:', urlToRemove);
+                    }
+                } catch (error) {
+                    console.error('Error al eliminar imagen del servidor:', error);
+                    setMessage({ type: 'error', text: 'Error al eliminar la imagen' });
+                    return; // No eliminar del array local si falló en el servidor
+                }
+            }
+
             const newUrls = imageUrls.filter((_, i) => i !== index);
             setImageUrls(newUrls);
         }
@@ -148,10 +168,13 @@ export default function ProductForm() {
                 for (let i = 1; i < imageUrls.length; i++) {
                     const url = imageUrls[i].trim();
                     if (url) {
-                        try {
-                            await addImagenToProducto(user?.token, producto.id, url);
-                        } catch (imgError) {
-                            console.warn('Error al agregar imagen:', imgError);
+                        // Solo agregar si es una nueva imagen (no estaba en las originales)
+                        if (!isEdit || !originalImageUrls.includes(url)) {
+                            try {
+                                await addImagenToProducto(user?.token, producto.id, url);
+                            } catch (imgError) {
+                                console.error('Error al agregar imagen:', imgError);
+                            }
                         }
                     }
                 }

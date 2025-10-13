@@ -4,19 +4,19 @@ import { API_URL, getJSON, postJSONWithToken } from './client';
 export async function getAllCategorias(token) {
     const url = `${API_URL}/categorias`;
 
-    // Primero intento sin token para ver si es público
+    // Si hay token, usar autenticación
+    if (token) {
+        return getJSON(url, token);
+    }
+
+    // Si no hay token, intentar acceso público
     try {
         const res = await fetch(url);
         if (res.ok) {
             return res.json();
         }
     } catch (error) {
-        console.warn('Endpoint público falló, intentando con token:', error);
-    }
-
-    // Si falla sin token, intento con token
-    if (token) {
-        return getJSON(url, token);
+        console.error('Error al cargar categorías:', error);
     }
 
     throw new Error('No se pueden cargar las categorías');
