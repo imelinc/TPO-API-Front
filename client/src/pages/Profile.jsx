@@ -103,7 +103,7 @@ export default function Profile() {
                         </div>
 
                         {/* Sección de Órdenes */}
-                        {(user.rol === "COMPRADOR" || user.rol === "ADMIN") && (
+                        {user.rol === "COMPRADOR" && (
                             <div className="profile-section">
                                 <h3 className="profile-section-title">Mis Compras</h3>
                                 <div className="profile-actions">
@@ -115,7 +115,7 @@ export default function Profile() {
                         )}
 
                         {/* Sección de Ventas (para vendedores) */}
-                        {(user.rol === "VENDEDOR" || user.rol === "ADMIN") && (
+                        {user.rol === "VENDEDOR" && (
                             <div className="profile-section">
                                 <h3 className="profile-section-title">Mi Negocio</h3>
                                 <div className="profile-actions">
