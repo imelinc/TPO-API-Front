@@ -5,6 +5,98 @@ const authHeaders = (token) => ({
     Authorization: `Bearer ${token}`,
 });
 
+// Variable para controlar si usar mock o API real
+const USE_MOCK = true; // Cambiar a false cuando el backend esté listo
+
+// Almacenamiento local para wishlists mock (se comparte con cart.js)
+// Nota: mockWishlists se define en cart.js, aquí solo lo referenciamos
+let mockWishlists;
+if (typeof window !== 'undefined') {
+    // En el navegador, usar una variable global compartida
+    if (!window.mockWishlists) {
+        window.mockWishlists = new Map();
+    }
+    mockWishlists = window.mockWishlists;
+} else {
+    // En Node.js, crear un Map local
+    mockWishlists = new Map();
+}
+
+// Función para simular delay de red
+const simulateNetworkDelay = () => new Promise(resolve => setTimeout(resolve, 300));
+
+// Funciones mock para wishlist
+const mockCreateWishlistIfMissing = async (token, usuarioId) => {
+    await simulateNetworkDelay();
+    if (!mockWishlists.has(usuarioId)) {
+        mockWishlists.set(usuarioId, {
+            id: `wishlist_${usuarioId}`,
+            usuarioId: usuarioId,
+            items: [],
+            fechaCreacion: new Date().toISOString()
+        });
+    }
+    return mockWishlists.get(usuarioId);
+};
+
+const mockGetWishlist = async (token, usuarioId) => {
+    await simulateNetworkDelay();
+    const wishlist = mockWishlists.get(usuarioId);
+    if (!wishlist) {
+        return await mockCreateWishlistIfMissing(token, usuarioId);
+    }
+    return wishlist;
+};
+
+const mockAddItemToWishlist = async (token, usuarioId, productoId, productoTitulo) => {
+    await simulateNetworkDelay();
+    
+    // Asegurar que la wishlist existe
+    await mockCreateWishlistIfMissing(token, usuarioId);
+    const wishlist = mockWishlists.get(usuarioId);
+    
+    // Verificar si el producto ya está en la wishlist
+    const existingItem = wishlist.items.find(item => item.productoId === productoId);
+    
+    if (existingItem) {
+        throw new Error("El producto ya está en tu wishlist");
+    }
+    
+    // Agregar el producto
+    wishlist.items.push({
+        productoId,
+        titulo: productoTitulo || `Producto ${productoId}`,
+        fechaAgregado: new Date().toISOString()
+    });
+    
+    return wishlist;
+};
+
+const mockRemoveWishlistItem = async (token, usuarioId, productoId) => {
+    await simulateNetworkDelay();
+    const wishlist = mockWishlists.get(usuarioId);
+    if (!wishlist) throw new Error("Wishlist no encontrada");
+    
+    const initialLength = wishlist.items.length;
+    wishlist.items = wishlist.items.filter(item => item.productoId !== productoId);
+    
+    if (wishlist.items.length === initialLength) {
+        throw new Error("Item no encontrado en la wishlist");
+    }
+    
+    return wishlist;
+};
+
+const mockClearWishlist = async (token, usuarioId) => {
+    await simulateNetworkDelay();
+    const wishlist = mockWishlists.get(usuarioId);
+    if (!wishlist) throw new Error("Wishlist no encontrada");
+    
+    wishlist.items = [];
+    
+    return wishlist;
+};
+
 // Función helper para retry en caso de errores 500
 const fetchWithRetry = async (url, options, maxRetries = 2) => {
     let lastError;
@@ -42,6 +134,10 @@ const fetchWithRetry = async (url, options, maxRetries = 2) => {
 
 // -------- Wishlist --------
 export async function createWishlistIfMissing(token, usuarioId) {
+    if (USE_MOCK) {
+        return await mockCreateWishlistIfMissing(token, usuarioId);
+    }
+    
     try {
         // Usar el endpoint correcto del backend
         const createRes = await fetch(`${API}/usuarios/${usuarioId}/wishlist/create-if-not-exists`, {
@@ -61,6 +157,10 @@ export async function createWishlistIfMissing(token, usuarioId) {
 }
 
 export async function getWishlist(token, usuarioId) {
+    if (USE_MOCK) {
+        return await mockGetWishlist(token, usuarioId);
+    }
+    
     try {
         // Usar el endpoint correcto del backend
         const res = await fetchWithRetry(`${API}/usuarios/${usuarioId}/wishlist`, {
@@ -88,6 +188,10 @@ export async function getWishlist(token, usuarioId) {
 }
 
 export async function clearWishlist(token, usuarioId) {
+    if (USE_MOCK) {
+        return await mockClearWishlist(token, usuarioId);
+    }
+    
     try {
         const res = await fetch(`${API}/usuarios/${usuarioId}/wishlist/items`, {
             method: "DELETE",
@@ -106,6 +210,10 @@ export async function clearWishlist(token, usuarioId) {
 
 // -------- Items --------
 export async function addItemToWishlist(token, usuarioId, productoId, productoTitulo) {
+    if (USE_MOCK) {
+        return await mockAddItemToWishlist(token, usuarioId, productoId, productoTitulo);
+    }
+    
     try {
         // Primero intentar crear/obtener la wishlist para asegurar que existe
         await createWishlistIfMissing(token, usuarioId);
@@ -149,6 +257,10 @@ export async function addItemToWishlist(token, usuarioId, productoId, productoTi
 }
 
 export async function removeWishlistItem(token, usuarioId, productoId) {
+    if (USE_MOCK) {
+        return await mockRemoveWishlistItem(token, usuarioId, productoId);
+    }
+    
     try {
         const res = await fetch(
             `${API}/usuarios/${usuarioId}/wishlist/items/${productoId}`,
