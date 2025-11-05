@@ -26,15 +26,13 @@ import Quality from "./pages/Quality";
 // Redux imports
 import { useAppDispatch, useAppSelector } from "./redux/hooks";
 import { selectUser } from "./redux/slices/authSlice";
-import { selectCartCount, fetchCart } from "./redux/slices/cartSlice";
-import { selectWishlistCount, fetchWishlist } from "./redux/slices/wishlistSlice";
+import { fetchCart } from "./redux/slices/cartSlice";
+import { fetchWishlist } from "./redux/slices/wishlistSlice";
 import "./App.css";
 
 export default function App() {
   const dispatch = useAppDispatch();
   const user = useAppSelector(selectUser);
-  const cartCount = useAppSelector(selectCartCount);
-  const wishlistCount = useAppSelector(selectWishlistCount);
   const location = useLocation();
 
   // Cargar cart y wishlist cuando el usuario cambie (login/logout)
@@ -67,7 +65,7 @@ export default function App() {
 
   return (
     <>
-      <Navbar cartCount={cartCount} wishlistCount={wishlistCount} />
+      <Navbar />
       <Routes>
         {/* Rutas públicas */}
         <Route path="/login" element={<Login />} />

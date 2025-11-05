@@ -1,16 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+// Redux imports
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { selectUser, logout as logoutAction } from "../../redux/slices/authSlice";
+import { selectCartCount } from "../../redux/slices/cartSlice";
+import { selectWishlistCount } from "../../redux/slices/wishlistSlice";
 import "../../styles/navbar.css";
 import Logo from "../../assets/Logo-big.png";
 
-export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
+export default function Navbar() {
     const [q, setQ] = useState("");
     const [open, setOpen] = useState(false);
     const menuRef = useRef(null);
 
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const dispatch = useAppDispatch();
+    
+    // Leer estado de Redux
+    const user = useAppSelector(selectUser);
+    const cartCount = useAppSelector(selectCartCount);
+    const wishlistCount = useAppSelector(selectWishlistCount);
 
     const onSubmit = (e) => {
         e.preventDefault();
@@ -33,7 +42,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
     };
 
     const handleLogout = async () => {
-        await logout();    // llama /auth/logout y limpia el contexto
+        await dispatch(logoutAction());  // Redux thunk: llama /auth/logout y limpia el store
         setOpen(false);
         navigate("/");
     };
@@ -208,7 +217,7 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                                 <div
                                     className="user-item danger"
                                     onClick={async () => {
-                                        await logout();
+                                        await dispatch(logoutAction());
                                         setOpen(false);
                                         window.alert("Sesión cerrada exitosamente.");
                                         navigate("/");
