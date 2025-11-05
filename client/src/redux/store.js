@@ -7,6 +7,8 @@ import productsReducer from './slices/productsSlice';
 import cartReducer from './slices/cartSlice';
 import wishlistReducer from './slices/wishlistSlice';
 import ordersReducer from './slices/ordersSlice';
+import usuariosReducer from './slices/usuariosSlice';
+import adminOrdersReducer from './slices/adminOrdersSlice';
 
 /**
  * Store de Redux - Configuración centralizada del estado de la aplicación
@@ -16,7 +18,9 @@ import ordersReducer from './slices/ordersSlice';
  * - products: Productos (lista, búsqueda, detalle)
  * - cart: Carrito de compras (CRUD completo + checkout)
  * - wishlist: Lista de deseos (CRUD completo + mover al carrito)
- * - orders: Órdenes (lista, detalles, historial)
+ * - orders: Órdenes del usuario (lista, detalles, historial)
+ * - usuarios: Usuarios (admin - listar, promover, degradar)
+ * - adminOrders: Órdenes globales (admin - todas las órdenes del sistema)
  */
 export const store = configureStore({
     reducer: {
@@ -25,9 +29,10 @@ export const store = configureStore({
         cart: cartReducer,
         wishlist: wishlistReducer,
         orders: ordersReducer,
+        usuarios: usuariosReducer,
+        adminOrders: adminOrdersReducer,
         // categorias: categoriasReducer,     // TODO: Para futuras funcionalidades
         // descuentos: descuentosReducer,     // TODO: Para futuras funcionalidades
-        // usuarios: usuariosReducer,         // TODO: Para futuras funcionalidades
         // vendedor: vendedorReducer,         // TODO: Para futuras funcionalidades
     },
     middleware: (getDefaultMiddleware) =>
