@@ -81,14 +81,14 @@ export default function ProductForm() {
             const urls = [];
 
             // Agregar imagen principal si existe
-            if (producto.imagenUrl) {
-                urls.push(producto.imagenUrl);
+            if (currentProducto.imagenUrl) {
+                urls.push(currentProducto.imagenUrl);
             }
 
             // Agregar imágenes adicionales (filtrar la principal si está duplicada)
-            if (producto.imagenes && producto.imagenes.length > 0) {
-                producto.imagenes.forEach(img => {
-                    if (img.url && img.url !== producto.imagenUrl) {
+            if (currentProducto.imagenes && currentProducto.imagenes.length > 0) {
+                currentProducto.imagenes.forEach(img => {
+                    if (img.url && img.url !== currentProducto.imagenUrl) {
                         urls.push(img.url);
                     }
                 });
@@ -99,13 +99,8 @@ export default function ProductForm() {
 
             setImageUrls(urls);
             setOriginalImageUrls([...urls]); // Guardar copia de las imágenes originales
-
-        } catch (error) {
-            setMessage({ type: 'error', text: 'Error al cargar el producto' });
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [currentProducto, isEdit]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
