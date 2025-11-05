@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 // Redux imports
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { selectUser } from "../../redux/slices/authSlice";
@@ -10,21 +10,25 @@ import {
     selectUsuariosLoading,
     selectUsuariosError,
     selectUsuariosPagination,
-    selectUsuariosActionSuccess,
-    clearActionSuccess,
 } from "../../redux/slices/usuariosSlice";
-import StatusMessage from "../common/StatusMessage";
+import Toast from "../common/Toast";
 
 export default function UsersList() {
     const dispatch = useAppDispatch();
-    
+
     // Estado de Redux
     const user = useAppSelector(selectUser);
     const usuarios = useAppSelector(selectUsuarios);
     const loading = useAppSelector(selectUsuariosLoading);
     const error = useAppSelector(selectUsuariosError);
     const pagination = useAppSelector(selectUsuariosPagination);
-    const actionSuccess = useAppSelector(selectUsuariosActionSuccess);
+
+    // Estado local para toast
+    const [showToast, setShowToast] = useState(false);
+    const [toastConfig, setToastConfig] = useState({
+        message: "",
+        type: "success"
+    });
 
     useEffect(() => {
         if (user?.token) {
@@ -32,24 +36,46 @@ export default function UsersList() {
         }
     }, [user, dispatch]);
 
-    // Auto-ocultar mensajes de éxito/error
+    // Mostrar errores con toast
     useEffect(() => {
-        if (actionSuccess) {
-            setTimeout(() => {
-                dispatch(clearActionSuccess());
-                dispatch(fetchUsuarios({ page: pagination.page, size: 20 }));
-            }, 2000);
+        if (error) {
+            setToastConfig({ message: error, type: "error" });
+            setShowToast(true);
         }
-    }, [actionSuccess, dispatch, pagination.page]);
+    }, [error]);
 
     const handlePromover = async (usuario) => {
         if (!window.confirm(`¿Promover a ${usuario.username} a ADMIN?`)) return;
-        dispatch(promoteUser(usuario.id));
+
+        const result = await dispatch(promoteUser(usuario.id));
+
+        if (result.type === 'usuarios/promoteUser/fulfilled') {
+            setToastConfig({ message: `✓ ${usuario.username} promovido a ADMIN`, type: "success" });
+            setShowToast(true);
+            setTimeout(() => {
+                dispatch(fetchUsuarios({ page: pagination.page, size: 20 }));
+            }, 500);
+        } else if (result.type === 'usuarios/promoteUser/rejected') {
+            setToastConfig({ message: result.payload || "Error al promover usuario", type: "error" });
+            setShowToast(true);
+        }
     };
 
     const handleDegradar = async (usuario) => {
         if (!window.confirm(`¿Degradar a ${usuario.username} a VENDEDOR?`)) return;
-        dispatch(demoteUser(usuario.id));
+
+        const result = await dispatch(demoteUser(usuario.id));
+
+        if (result.type === 'usuarios/demoteUser/fulfilled') {
+            setToastConfig({ message: `✓ ${usuario.username} degradado a VENDEDOR`, type: "success" });
+            setShowToast(true);
+            setTimeout(() => {
+                dispatch(fetchUsuarios({ page: pagination.page, size: 20 }));
+            }, 500);
+        } else if (result.type === 'usuarios/demoteUser/rejected') {
+            setToastConfig({ message: result.payload || "Error al degradar usuario", type: "error" });
+            setShowToast(true);
+        }
     };
 
     const getRolBadgeClass = (rol) => {
@@ -67,18 +93,12 @@ export default function UsersList() {
 
     return (
         <div className="users-list-container">
-            {error && (
-                <StatusMessage
-                    type="error"
-                    message={error}
-                    onClose={() => {}}
-                />
-            )}
-            {actionSuccess && (
-                <StatusMessage
-                    type="success"
-                    message={actionSuccess}
-                    onClose={() => dispatch(clearActionSuccess())}
+            {showToast && (
+                <Toast
+                    message={toastConfig.message}
+                    type={toastConfig.type}
+                    duration={3000}
+                    onClose={() => setShowToast(false)}
                 />
             )}
 

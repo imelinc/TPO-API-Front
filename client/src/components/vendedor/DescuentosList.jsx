@@ -8,29 +8,29 @@ import {
     createNewDescuento,
     deleteExistingDescuento,
     selectDescuentosCreating,
-    selectDescuentosDeleting,
     selectDescuentosError,
-    selectDescuentosActionSuccess,
-    selectDescuentoByProductoId,
-    clearDescuentosActionSuccess,
 } from '../../redux/slices/descuentosSlice';
-import StatusMessage from '../common/StatusMessage';
+import Toast from '../common/Toast';
 import '../../styles/descuentosList.css';
 
 export default function DescuentosList() {
     const dispatch = useAppDispatch();
-    
+
     // Estado de Redux
     const user = useAppSelector(selectUser);
     const productos = useAppSelector(selectVendedorProductos);
     const loading = useAppSelector(selectVendedorLoading);
     const creating = useAppSelector(selectDescuentosCreating);
     const error = useAppSelector(selectDescuentosError);
-    const actionSuccess = useAppSelector(selectDescuentosActionSuccess);
-    
+
     const [selectedProducto, setSelectedProducto] = useState(null);
     const [descuentoCompleto, setDescuentoCompleto] = useState(null);
     const [showModal, setShowModal] = useState(false);
+    const [showToast, setShowToast] = useState(false);
+    const [toastConfig, setToastConfig] = useState({
+        message: "",
+        type: "success"
+    });
     const [formData, setFormData] = useState({
         porcentajeDescuento: '',
         fechaInicio: '',
@@ -44,16 +44,14 @@ export default function DescuentosList() {
             dispatch(fetchVendedorProductos({ page: 0, size: 50 }));
         }
     }, [user?.token, dispatch]);
-    
-    // Auto-ocultar mensaje de éxito
+
+    // Mostrar errores con toast
     useEffect(() => {
-        if (actionSuccess) {
-            setTimeout(() => {
-                dispatch(clearDescuentosActionSuccess());
-                dispatch(fetchVendedorProductos({ page: 0, size: 50 }));
-            }, 3000);
+        if (error) {
+            setToastConfig({ message: error, type: "error" });
+            setShowToast(true);
         }
-    }, [actionSuccess, dispatch]);
+    }, [error]);
 
     const handleProductoClick = async (producto) => {
         setSelectedProducto(producto);
@@ -109,16 +107,19 @@ export default function DescuentosList() {
         }));
 
         if (result.type === 'descuentos/createNewDescuento/fulfilled') {
+            setToastConfig({ message: "✓ Descuento creado exitosamente", type: "success" });
+            setShowToast(true);
+            dispatch(fetchVendedorProductos({ page: 0, size: 50 }));
             handleCloseModal();
+        } else if (result.type === 'descuentos/createNewDescuento/rejected') {
+            setToastConfig({ message: result.payload || "Error al crear descuento", type: "error" });
+            setShowToast(true);
         }
     };
-    
+
     const handleDeleteDescuento = async () => {
         if (!descuentoCompleto) return;
-
-        if (!window.confirm('¿Estás seguro de eliminar este descuento?')) {
-            return;
-        }
+        if (!window.confirm('¿Estás seguro de eliminar este descuento?')) return;
 
         const result = await dispatch(deleteExistingDescuento({
             productoId: selectedProducto.id,
@@ -126,12 +127,14 @@ export default function DescuentosList() {
         }));
 
         if (result.type === 'descuentos/deleteExistingDescuento/fulfilled') {
+            setToastConfig({ message: "✓ Descuento eliminado exitosamente", type: "success" });
+            setShowToast(true);
             // Refrescar productos para actualizar el estado de descuentos
             dispatch(fetchVendedorProductos({ page: 0, size: 50 }));
             handleCloseModal();
         } else if (result.type === 'descuentos/deleteExistingDescuento/rejected') {
-            // El error se mostrará automáticamente a través del selector de error
-            alert(`Error al eliminar descuento: ${result.payload || 'Error desconocido'}`);
+            setToastConfig({ message: result.payload || "Error al eliminar descuento", type: "error" });
+            setShowToast(true);
         }
     };
 
@@ -171,6 +174,15 @@ export default function DescuentosList() {
 
     return (
         <div className="descuentos-container">
+            {showToast && (
+                <Toast
+                    message={toastConfig.message}
+                    type={toastConfig.type}
+                    duration={3000}
+                    onClose={() => setShowToast(false)}
+                />
+            )}
+
             <div className="descuentos-header">
                 <div className="descuentos-title">
                     <h2>Gestión de Descuentos</h2>
@@ -184,13 +196,6 @@ export default function DescuentosList() {
                     </div>
                 )}
             </div>
-
-            {error && (
-                <StatusMessage type="error" message={error} />
-            )}
-            {actionSuccess && (
-                <StatusMessage type="success" message={actionSuccess} />
-            )}
 
             {productos.length === 0 ? (
                 <div className="empty-state">

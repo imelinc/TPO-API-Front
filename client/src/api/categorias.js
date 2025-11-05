@@ -35,12 +35,16 @@ export async function deleteCategoria(token, id) {
         method: 'DELETE',
         headers: {
             'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
         },
+        credentials: 'include',
     });
 
     if (!res.ok) {
-        const error = await res.text().catch(() => 'Error desconocido');
-        throw new Error(`HTTP ${res.status}: ${error}`);
+        const errorData = await res.json().catch(() => ({}));
+        const errorMsg = errorData.message || errorData.error || `Error HTTP ${res.status}`;
+        console.error('Error al eliminar categoría:', res.status, errorData);
+        throw new Error(errorMsg);
     }
 
     // DELETE devuelve 204 No Content sin body
