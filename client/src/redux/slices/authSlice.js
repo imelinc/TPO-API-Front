@@ -13,7 +13,7 @@ export const login = createAsyncThunk(
   async ({ email, password }, { rejectWithValue }) => {
     try {
       const data = await loginApi({ email, password });
-      
+
       // Transformar respuesta del backend al formato del store
       return {
         token: data.access_token,
@@ -40,7 +40,7 @@ export const register = createAsyncThunk(
   async (userData, { rejectWithValue }) => {
     try {
       const data = await registerApi(userData);
-      
+
       // Transformar respuesta del backend al formato del store
       return {
         token: data.access_token,
@@ -62,9 +62,12 @@ export const register = createAsyncThunk(
  */
 export const logout = createAsyncThunk(
   'auth/logout',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
-      await logoutApi();
+      const token = getState().auth.user?.token;
+      if (token) {
+        await logoutApi(token);
+      }
     } catch (error) {
       // No importa si falla el logout en el backend
       // El usuario debe poder cerrar sesión localmente siempre
@@ -134,7 +137,7 @@ const authSlice = createSlice({
         state.error = action.payload;
         state.loginSuccess = false;
       })
-      
+
       // ========== REGISTER ==========
       .addCase(register.pending, (state) => {
         state.loading = true;
@@ -152,7 +155,7 @@ const authSlice = createSlice({
         state.error = action.payload;
         state.registerSuccess = false;
       })
-      
+
       // ========== LOGOUT ==========
       .addCase(logout.pending, (state) => {
         state.loading = true;
