@@ -1,7 +1,9 @@
-import { useAuth } from "../../context/AuthContext";
+// Redux imports
+import { useAppSelector } from "../../redux/hooks";
+import { selectUser } from "../../redux/slices/authSlice";
 
 export default function CartItemRow({ item, onQtyChange, onRemove }) {
-    const { user } = useAuth();
+    const user = useAppSelector(selectUser);
     const token = user?.token;
     const titulo = item.productoTitulo;
     const precio = item.precio;
