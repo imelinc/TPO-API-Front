@@ -1,24 +1,34 @@
 import { configureStore } from '@reduxjs/toolkit';
 import errorMiddleware from './middleware/errorMiddleware';
 
+// Importar reducers
+import authReducer from './slices/authSlice';
+import productsReducer from './slices/productsSlice';
+import cartReducer from './slices/cartSlice';
+import wishlistReducer from './slices/wishlistSlice';
+import ordersReducer from './slices/ordersSlice';
+
 /**
  * Store de Redux - Configuración centralizada del estado de la aplicación
  * 
- * Esta es la configuración inicial. Los reducers se agregarán a medida que
- * se creen los slices correspondientes.
+ * Reducers activos:
+ * - auth: Autenticación (login, register, logout)
+ * - products: Productos (lista, búsqueda, detalle)
+ * - cart: Carrito de compras (CRUD completo + checkout)
+ * - wishlist: Lista de deseos (CRUD completo + mover al carrito)
+ * - orders: Órdenes (lista, detalles, historial)
  */
 export const store = configureStore({
     reducer: {
-        // Los reducers se agregarán aquí a medida que se creen los slices
-        // auth: authReducer,
-        // products: productsReducer,
-        // cart: cartReducer,
-        // wishlist: wishlistReducer,
-        // orders: ordersReducer,
-        // categorias: categoriasReducer,
-        // descuentos: descuentosReducer,
-        // usuarios: usuariosReducer,
-        // vendedor: vendedorReducer,
+        auth: authReducer,
+        products: productsReducer,
+        cart: cartReducer,
+        wishlist: wishlistReducer,
+        orders: ordersReducer,
+        // categorias: categoriasReducer,     // TODO: Para futuras funcionalidades
+        // descuentos: descuentosReducer,     // TODO: Para futuras funcionalidades
+        // usuarios: usuariosReducer,         // TODO: Para futuras funcionalidades
+        // vendedor: vendedorReducer,         // TODO: Para futuras funcionalidades
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
