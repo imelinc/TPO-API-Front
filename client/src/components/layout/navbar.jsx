@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 // Redux imports
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { selectUser, logout as logoutAction } from "../../redux/slices/authSlice";
-import { selectCartCount } from "../../redux/slices/cartSlice";
-import { selectWishlistCount } from "../../redux/slices/wishlistSlice";
+import { selectCartCount, resetCart } from "../../redux/slices/cartSlice";
+import { selectWishlistCount, resetWishlist } from "../../redux/slices/wishlistSlice";
 import "../../styles/navbar.css";
 import Logo from "../../assets/Logo-big.png";
 
@@ -42,7 +42,11 @@ export default function Navbar() {
     };
 
     const handleLogout = async () => {
-        await dispatch(logoutAction());  // Redux thunk: llama /auth/logout y limpia el store
+        // Limpiar carrito y wishlist antes del logout
+        dispatch(resetCart());
+        dispatch(resetWishlist());
+        // Hacer logout (puede fallar con 500, pero limpiamos localmente)
+        await dispatch(logoutAction());
         setOpen(false);
         navigate("/");
     };
@@ -217,6 +221,10 @@ export default function Navbar() {
                                 <div
                                     className="user-item danger"
                                     onClick={async () => {
+                                        // Limpiar carrito y wishlist antes del logout
+                                        dispatch(resetCart());
+                                        dispatch(resetWishlist());
+                                        // Hacer logout (puede fallar con 500, pero limpiamos localmente)
                                         await dispatch(logoutAction());
                                         setOpen(false);
                                         window.alert("Sesión cerrada exitosamente.");

@@ -126,7 +126,12 @@ export default function DescuentosList() {
         }));
 
         if (result.type === 'descuentos/deleteExistingDescuento/fulfilled') {
+            // Refrescar productos para actualizar el estado de descuentos
+            dispatch(fetchVendedorProductos({ page: 0, size: 50 }));
             handleCloseModal();
+        } else if (result.type === 'descuentos/deleteExistingDescuento/rejected') {
+            // El error se mostrará automáticamente a través del selector de error
+            alert(`Error al eliminar descuento: ${result.payload || 'Error desconocido'}`);
         }
     };
 

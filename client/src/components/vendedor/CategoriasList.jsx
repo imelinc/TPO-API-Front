@@ -72,7 +72,15 @@ export default function CategoriasList() {
             return;
         }
 
-        dispatch(deleteExistingCategoria(categoriaId));
+        const result = await dispatch(deleteExistingCategoria(categoriaId));
+        
+        // Si se eliminó exitosamente, refrescar la lista
+        if (result.type === 'categorias/deleteExistingCategoria/fulfilled') {
+            dispatch(fetchCategorias());
+        } else if (result.type === 'categorias/deleteExistingCategoria/rejected') {
+            // El error se mostrará automáticamente a través del selector de error
+            alert(`Error al eliminar categoría: ${result.payload || 'Error desconocido'}`);
+        }
     };
 
     if (loading) {

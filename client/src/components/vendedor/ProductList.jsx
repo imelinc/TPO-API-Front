@@ -87,7 +87,15 @@ export default function ProductList() {
             return;
         }
 
-        dispatch(deleteVendedorProducto(productoId));
+        const result = await dispatch(deleteVendedorProducto(productoId));
+        
+        // Si se eliminó exitosamente, refrescar la lista
+        if (result.type === 'vendedor/deleteVendedorProducto/fulfilled') {
+            dispatch(fetchVendedorProductos({ page: 0, size: 50 }));
+        } else if (result.type === 'vendedor/deleteVendedorProducto/rejected') {
+            // El error se mostrará automáticamente a través del selector de error
+            alert(`Error al eliminar producto: ${result.payload || 'Error desconocido'}`);
+        }
     };
 
     const formatPrice = (price) => {

@@ -35,9 +35,10 @@ export default function AddToWishlistButton({ productoId, producto, onAdded }) {
                 dispatch(fetchWishlist());
             }, 300);
             onAdded?.();
+            // Solo navegar si no hay error y el usuario quiere
             navigate('/wishlist');
-        } else if (result.payload) {
-            const errorMessage = result.payload;
+        } else if (result.type === 'wishlist/addToWishlist/rejected') {
+            const errorMessage = result.payload || 'Error desconocido';
             if (errorMessage.includes("Error interno del servidor")) {
                 alert("⚠️ El servidor está experimentando problemas temporales. Por favor, inténtalo en unos minutos.");
             } else if (errorMessage.includes("Error de conexión")) {

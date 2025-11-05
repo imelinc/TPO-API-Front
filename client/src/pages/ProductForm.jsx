@@ -64,6 +64,16 @@ export default function ProductForm() {
         };
     }, [id, user?.token, isEdit, dispatch]);
     
+    // Auto-ocultar mensaje de éxito
+    useEffect(() => {
+        if (actionSuccess) {
+            const timer = setTimeout(() => {
+                dispatch(clearVendedorActionSuccess());
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [actionSuccess, dispatch]);
+    
     // Actualizar formData cuando se cargue el producto
     useEffect(() => {
         if (currentProducto && isEdit) {
