@@ -1,46 +1,47 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 // Redux imports
-import { useAppSelector } from '../../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import { selectUser } from '../../redux/slices/authSlice';
-import { getVendedorProductos, deleteProducto } from '../../api/vendedor';
+import {
+    fetchVendedorProductos,
+    deleteVendedorProducto,
+    selectVendedorProductos,
+    selectVendedorLoading,
+    selectVendedorError,
+    selectVendedorActionSuccess,
+    clearActionSuccess as clearVendedorActionSuccess,
+} from '../../redux/slices/vendedorSlice';
 import { getUsuarioById } from '../../api/usuarios';
 import StatusMessage from '../common/StatusMessage';
 import '../../styles/productList.css';
 
 export default function ProductList() {
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+    
+    // Estado de Redux
     const user = useAppSelector(selectUser);
-    const [productos, setProductos] = useState([]);
+    const productos = useAppSelector(selectVendedorProductos);
+    const loading = useAppSelector(selectVendedorLoading);
+    const error = useAppSelector(selectVendedorError);
+    const actionSuccess = useAppSelector(selectVendedorActionSuccess);
+    
     const [vendedores, setVendedores] = useState({}); // Cache de vendedores {id: {nombre, apellido}}
-    const [loading, setLoading] = useState(true);
-    const [message, setMessage] = useState({ type: '', text: '' });
 
     useEffect(() => {
         if (user?.token) {
-            loadProductos();
+            dispatch(fetchVendedorProductos({ page: 0, size: 50 }));
         }
-    }, [user?.token]);
-
-    const loadProductos = async () => {
-        try {
-            setLoading(true);
-            setMessage({ type: '', text: '' });
-            const data = await getVendedorProductos(user?.token);
-            // El backend devuelve directamente un array de ProductoDTO
-            const productosArray = Array.isArray(data) ? data : [];
-            setProductos(productosArray);
-
-            // Si es ADMIN, cargar información de los vendedores
-            if (user?.rol === "ADMIN") {
-                await loadVendedores(productosArray);
-            }
-        } catch (error) {
-            setMessage({ type: 'error', text: 'Error al cargar los productos' });
-        } finally {
-            setLoading(false);
+    }, [user?.token, dispatch]);
+    
+    // Cargar vendedores si es admin
+    useEffect(() => {
+        if (user?.rol === "ADMIN" && productos.length > 0) {
+            loadVendedores(productos);
         }
-    };
+    }, [productos, user?.rol]);
+
 
     const loadVendedores = async (productosArray) => {
         try {
@@ -86,18 +87,7 @@ export default function ProductList() {
             return;
         }
 
-        try {
-            await deleteProducto(user?.token, productoId);
-            // Remover el producto de la lista local y mostrar mensaje de éxito
-            setProductos(prev => prev.filter(p => p.id !== productoId));
-            setMessage({ type: 'success', text: 'Producto eliminado correctamente' });
-            // Auto-ocultar mensaje después de 3 segundos
-            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
-        } catch (error) {
-            setMessage({ type: 'error', text: 'Error al eliminar el producto' });
-            // Auto-ocultar mensaje de error después de 5 segundos
-            setTimeout(() => setMessage({ type: '', text: '' }), 5000);
-        }
+        dispatch(deleteVendedorProducto(productoId));
     };
 
     const formatPrice = (price) => {
@@ -114,11 +104,18 @@ export default function ProductList() {
 
     return (
         <div className="product-list-container">
-            {message.text && (
+            {error && (
                 <StatusMessage
-                    type={message.type}
-                    message={message.text}
-                    onClose={() => setMessage({ type: '', text: '' })}
+                    type="error"
+                    message={error}
+                    onClose={() => {}}
+                />
+            )}
+            {actionSuccess && (
+                <StatusMessage
+                    type="success"
+                    message={actionSuccess}
+                    onClose={() => dispatch(clearVendedorActionSuccess())}
                 />
             )}
 
