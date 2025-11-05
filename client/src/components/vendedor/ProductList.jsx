@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+// Redux imports
+import { useAppSelector } from '../../redux/hooks';
+import { selectUser } from '../../redux/slices/authSlice';
 import { getVendedorProductos, deleteProducto } from '../../api/vendedor';
 import { getUsuarioById } from '../../api/usuarios';
 import StatusMessage from '../common/StatusMessage';
@@ -8,7 +10,7 @@ import '../../styles/productList.css';
 
 export default function ProductList() {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const user = useAppSelector(selectUser);
     const [productos, setProductos] = useState([]);
     const [vendedores, setVendedores] = useState({}); // Cache de vendedores {id: {nombre, apellido}}
     const [loading, setLoading] = useState(true);

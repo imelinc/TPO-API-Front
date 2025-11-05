@@ -1,83 +1,55 @@
-import { useState, useEffect } from "react";
-import { getAllUsuarios, promoverUsuario, degradarUsuario } from "../../api/usuarios";
-import { useAuth } from "../../context/AuthContext";
+import { useEffect } from "react";
+// Redux imports
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { selectUser } from "../../redux/slices/authSlice";
+import {
+    fetchUsuarios,
+    promoteUser,
+    demoteUser,
+    selectUsuarios,
+    selectUsuariosLoading,
+    selectUsuariosError,
+    selectUsuariosPagination,
+    selectUsuariosActionSuccess,
+    clearActionSuccess,
+} from "../../redux/slices/usuariosSlice";
 import StatusMessage from "../common/StatusMessage";
 
 export default function UsersList() {
-    const { user } = useAuth();
-    const [usuarios, setUsuarios] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [message, setMessage] = useState(null);
-    const [pagination, setPagination] = useState({
-        page: 0,
-        totalPages: 0,
-        totalElements: 0
-    });
-
-    const fetchUsuarios = async (page = 0) => {
-        try {
-            setLoading(true);
-            const data = await getAllUsuarios(user.token, page, 20);
-            setUsuarios(data.content || []);
-            setPagination({
-                page: data.number,
-                totalPages: data.totalPages,
-                totalElements: data.totalElements
-            });
-        } catch (error) {
-            setMessage({
-                type: "error",
-                text: error.message || "Error al cargar usuarios"
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+    const dispatch = useAppDispatch();
+    
+    // Estado de Redux
+    const user = useAppSelector(selectUser);
+    const usuarios = useAppSelector(selectUsuarios);
+    const loading = useAppSelector(selectUsuariosLoading);
+    const error = useAppSelector(selectUsuariosError);
+    const pagination = useAppSelector(selectUsuariosPagination);
+    const actionSuccess = useAppSelector(selectUsuariosActionSuccess);
 
     useEffect(() => {
         if (user?.token) {
-            fetchUsuarios();
+            dispatch(fetchUsuarios({ page: 0, size: 20 }));
         }
-    }, [user]);
+    }, [user, dispatch]);
+
+    // Auto-ocultar mensajes de éxito/error
+    useEffect(() => {
+        if (actionSuccess) {
+            setTimeout(() => {
+                dispatch(clearActionSuccess());
+                dispatch(fetchUsuarios({ page: pagination.page, size: 20 }));
+            }, 2000);
+        }
+    }, [actionSuccess, dispatch, pagination.page]);
 
     const handlePromover = async (usuario) => {
         if (!window.confirm(`¿Promover a ${usuario.username} a ADMIN?`)) return;
-
-        try {
-            await promoverUsuario(user.token, usuario.id);
-            setMessage({
-                type: "success",
-                text: `${usuario.username} ha sido promovido a ADMIN`
-            });
-            // Auto-ocultar mensaje después de 2 segundos
-            setTimeout(() => setMessage(null), 2000);
-            fetchUsuarios(pagination.page); // Recargar la página actual
-        } catch (error) {
-            const errorMsg = error.message || "Error al promover usuario";
-            setMessage({ type: "error", text: errorMsg });
-            // Auto-ocultar mensaje de error después de 2 segundos
-            setTimeout(() => setMessage(null), 2000);
-        }
+        dispatch(promoteUser(usuario.id));
     };
 
     const handleDegradar = async (usuario) => {
         if (!window.confirm(`¿Degradar a ${usuario.username} a VENDEDOR?`)) return;
-
-        try {
-            await degradarUsuario(user.token, usuario.id);
-            setMessage({
-                type: "success",
-                text: `${usuario.username} ha sido degradado a VENDEDOR`
-            });
-            // Auto-ocultar mensaje después de 2 segundos
-            setTimeout(() => setMessage(null), 2000);
-            fetchUsuarios(pagination.page);
-        } catch (error) {
-            const errorMsg = error.message || "Error al degradar usuario";
-            setMessage({ type: "error", text: errorMsg });
-            // Auto-ocultar mensaje de error después de 2 segundos
-            setTimeout(() => setMessage(null), 2000);
-        }
+        dispatch(demoteUser(usuario.id));
     };
 
     const getRolBadgeClass = (rol) => {
@@ -95,11 +67,18 @@ export default function UsersList() {
 
     return (
         <div className="users-list-container">
-            {message && (
+            {error && (
                 <StatusMessage
-                    type={message.type}
-                    message={message.text}
-                    onClose={() => setMessage(null)}
+                    type="error"
+                    message={error}
+                    onClose={() => {}}
+                />
+            )}
+            {actionSuccess && (
+                <StatusMessage
+                    type="success"
+                    message={actionSuccess}
+                    onClose={() => dispatch(clearActionSuccess())}
                 />
             )}
 
@@ -170,7 +149,7 @@ export default function UsersList() {
             {pagination.totalPages > 1 && (
                 <div className="pagination">
                     <button
-                        onClick={() => fetchUsuarios(pagination.page - 1)}
+                        onClick={() => dispatch(fetchUsuarios({ page: pagination.page - 1, size: 20 }))}
                         disabled={pagination.page === 0}
                         className="pagination-btn"
                     >
@@ -180,7 +159,7 @@ export default function UsersList() {
                         Página {pagination.page + 1} de {pagination.totalPages}
                     </span>
                     <button
-                        onClick={() => fetchUsuarios(pagination.page + 1)}
+                        onClick={() => dispatch(fetchUsuarios({ page: pagination.page + 1, size: 20 }))}
                         disabled={pagination.page >= pagination.totalPages - 1}
                         className="pagination-btn"
                     >

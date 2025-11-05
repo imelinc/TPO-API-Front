@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+// Redux imports
+import { useAppSelector } from '../redux/hooks';
+import { selectUser } from '../redux/slices/authSlice';
 import { createProducto, updateProducto, getProducto, addImagenToProducto, deleteImagenFromProducto } from '../api/vendedor';
 import { getAllCategorias } from '../api/categorias';
 import StatusMessage from '../components/common/StatusMessage';
@@ -9,7 +11,7 @@ import '../styles/productForm.css';
 export default function ProductForm() {
     const navigate = useNavigate();
     const { id } = useParams(); // Si hay ID, es edición; si no, es creación
-    const { user } = useAuth();
+    const user = useAppSelector(selectUser);
     const isEdit = Boolean(id);
 
     const [loading, setLoading] = useState(false);

@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
+// Redux imports
+import { useAppSelector } from '../../redux/hooks';
+import { selectUser } from '../../redux/slices/authSlice';
 import { getVendedorProductos } from '../../api/vendedor';
 import { createDescuento, deleteDescuento, getDescuentoByProducto } from '../../api/descuentos';
 import StatusMessage from '../common/StatusMessage';
 import '../../styles/descuentosList.css';
 
 export default function DescuentosList() {
-    const { user } = useAuth();
+    const user = useAppSelector(selectUser);
     const [productos, setProductos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState({ type: '', text: '' });

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
+// Redux imports
+import { useAppSelector } from '../../redux/hooks';
+import { selectUser } from '../../redux/slices/authSlice';
 import { getAllCategorias, createCategoria, deleteCategoria } from '../../api/categorias';
 import StatusMessage from '../common/StatusMessage';
 import '../../styles/categoriasList.css';
 
 export default function CategoriasList() {
-    const { user } = useAuth();
+    const user = useAppSelector(selectUser);
     const [categorias, setCategorias] = useState([]);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState({ type: '', text: '' });
