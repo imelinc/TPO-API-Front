@@ -1,41 +1,35 @@
-import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import { getUserOrders } from "../api/orders";
+import { useEffect } from "react";
+// Redux imports
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { selectUser } from "../redux/slices/authSlice";
+import {
+    fetchOrders,
+    selectOrders,
+    selectOrdersLoading,
+    selectOrdersError
+} from "../redux/slices/ordersSlice";
 import { getUserId } from "../utils/userUtils";
 import StatusMessage from "../components/common/StatusMessage";
 import OrderRow from "../components/orders/OrderRow";
 import "../styles/orders.css";
 
 export default function Orders() {
-    const { user } = useAuth();
+    const dispatch = useAppDispatch();
+    
+    // Estado de Redux
+    const user = useAppSelector(selectUser);
+    const orders = useAppSelector(selectOrders);
+    const loading = useAppSelector(selectOrdersLoading);
+    const error = useAppSelector(selectOrdersError);
+    
     const token = user?.token;
     const usuarioId = getUserId(user);
 
-    const [orders, setOrders] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-
     useEffect(() => {
         if (token && usuarioId) {
-            loadOrders();
+            dispatch(fetchOrders());
         }
-    }, [token, usuarioId]);
-
-    const loadOrders = async () => {
-        try {
-            setLoading(true);
-            setError("");
-            const data = await getUserOrders(token, usuarioId);
-            // La función getUserOrders ya extrae el array 'content'
-            setOrders(data);
-        } catch (err) {
-            console.error('Error loading orders:', err);
-            setError(err.message || "Error al cargar las órdenes");
-            setOrders([]);
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [token, usuarioId, dispatch]);
 
 
 

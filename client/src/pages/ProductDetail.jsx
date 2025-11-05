@@ -1,10 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { getProducto } from "../api/products";
-import { useAuth } from "../context/AuthContext";
-import { useCartWishlist } from "../context/CartWishlistContext";
-import { addItemToCart, createCartIfMissing } from "../api/cart";
-import { addItemToWishlist } from "../api/wishlist";
+// Redux imports
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { selectUser } from "../redux/slices/authSlice";
+import { 
+    fetchProductoById, 
+    selectCurrentProduct, 
+    selectProductLoading, 
+    selectProductError,
+    clearCurrentProduct 
+} from "../redux/slices/productsSlice";
+import { addToCart, fetchCart } from "../redux/slices/cartSlice";
+import { addToWishlist, fetchWishlist } from "../redux/slices/wishlistSlice";
 import { getUserId } from "../utils/userUtils";
 import "../styles/productDetail.css";
 
@@ -12,24 +19,23 @@ export default function ProductDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useAuth();
-    const { refreshCartCount, refreshWishlistCount } = useCartWishlist();
-
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [err, setErr] = useState("");
+    const dispatch = useAppDispatch();
+    
+    // Estado de Redux
+    const user = useAppSelector(selectUser);
+    const data = useAppSelector(selectCurrentProduct);
+    const loading = useAppSelector(selectProductLoading);
+    const err = useAppSelector(selectProductError);
+    
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
     useEffect(() => {
-        let alive = true;
-        setLoading(true);
-        setErr("");
-        getProducto(id)
-            .then((d) => alive && setData(d))
-            .catch((e) => alive && setErr(e.message || "No se pudo cargar el producto"))
-            .finally(() => alive && setLoading(false));
-        return () => { alive = false; };
-    }, [id]);
+        dispatch(fetchProductoById(id));
+        
+        return () => {
+            dispatch(clearCurrentProduct());
+        };
+    }, [id, dispatch]);
 
     // Resetear el índice seleccionado cuando cambie el producto
     useEffect(() => {
@@ -99,32 +105,21 @@ export default function ProductDetail() {
             return;
         }
 
-        // Obtener el token de acceso
-        const token = user.token;
-        if (!token) {
-            alert("No se encontró el token de acceso");
-            return;
-        }
+        const precioFinal = tieneDescuento ? precioConDescuento : precio;
+        
+        const result = await dispatch(addToCart({
+            productoId: id,
+            cantidad: 1,
+            precio: precioFinal
+        }));
 
-        try {
-            // Asegurar que el carrito existe
-            await createCartIfMissing(token, userId);
-            // Agregar el producto con el precio correspondiente
-            const precioFinal = tieneDescuento ? precioConDescuento : precio;
-            await addItemToCart(token, userId, {
-                productoId: id,
-                cantidad: 1,
-                precio: precioFinal // Cambiado a 'precio' para que coincida con la API
-            });
-
-            // Refrescar el contador del carrito
-            setTimeout(async () => {
-                await refreshCartCount();
+        if (result.type === 'cart/addToCart/fulfilled') {
+            setTimeout(() => {
+                dispatch(fetchCart());
             }, 300);
-
             navigate("/cart");
-        } catch (error) {
-            alert("Error al agregar al carrito: " + error.message);
+        } else if (result.payload) {
+            alert("Error al agregar al carrito: " + result.payload);
         }
     };
 
@@ -137,24 +132,18 @@ export default function ProductDetail() {
             return;
         }
 
-        const token = user.token;
-        if (!token) {
-            alert("No se encontró el token de acceso");
-            return;
-        }
+        const result = await dispatch(addToWishlist({
+            productoId: id,
+            productoTitulo: titulo
+        }));
 
-        try {
-            // addItemToWishlist ya maneja la creación automática de la wishlist
-            await addItemToWishlist(token, userId, id);
-
-            // Refrescar el contador de wishlist
-            setTimeout(async () => {
-                await refreshWishlistCount();
+        if (result.type === 'wishlist/addToWishlist/fulfilled') {
+            setTimeout(() => {
+                dispatch(fetchWishlist());
             }, 300);
-
             alert("Producto agregado a la wishlist");
-        } catch (error) {
-            alert("Error al agregar a la wishlist: " + error.message);
+        } else if (result.payload) {
+            alert("Error al agregar a la wishlist: " + result.payload);
         }
     };
     // ----------------------------------------------------

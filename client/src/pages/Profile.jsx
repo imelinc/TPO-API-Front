@@ -1,10 +1,12 @@
-import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
+// Redux imports
+import { useAppSelector } from "../redux/hooks";
+import { selectUser } from "../redux/slices/authSlice";
 import StatusMessage from "../components/common/StatusMessage";
 import "../styles/profile.css";
 
 export default function Profile() {
-    const { user } = useAuth();
+    const user = useAppSelector(selectUser);
 
     if (!user) {
         return (
