@@ -1,4 +1,5 @@
 import { Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import VendedorRoute from "./routes/VendedorRoute";
 import AdminRoute from "./routes/AdminRoute";
 import UserRoute from "./routes/UserRoute";
@@ -22,14 +23,31 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import AboutUs from "./pages/AboutUs";
 import Partners from "./pages/Partners";
 import Quality from "./pages/Quality";
-import { useAuth } from "./context/AuthContext";
-import { useCartWishlist } from "./context/CartWishlistContext";
+// Redux imports
+import { useAppDispatch, useAppSelector } from "./redux/hooks";
+import { selectUser } from "./redux/slices/authSlice";
+import { selectCartCount, fetchCart } from "./redux/slices/cartSlice";
+import { selectWishlistCount, fetchWishlist } from "./redux/slices/wishlistSlice";
 import "./App.css";
 
 export default function App() {
-  const { user } = useAuth();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector(selectUser);
+  const cartCount = useAppSelector(selectCartCount);
+  const wishlistCount = useAppSelector(selectWishlistCount);
   const location = useLocation();
-  const { cartCount, wishlistCount } = useCartWishlist();
+
+  // Cargar cart y wishlist cuando el usuario cambie (login/logout)
+  useEffect(() => {
+    if (user?.token && user?.id) {
+      // Solo cargar si el usuario NO es vendedor o admin
+      const rol = (user.rol || user.role || "").toString().toUpperCase().replace(/^ROLE_/, "");
+      if (rol !== "VENDEDOR" && rol !== "ADMIN") {
+        dispatch(fetchCart());
+        dispatch(fetchWishlist());
+      }
+    }
+  }, [user, dispatch]);
 
   // Determinar si mostrar el footer
   // No se muestra en: Login, Register, o si el usuario es vendedor o admin
