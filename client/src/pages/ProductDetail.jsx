@@ -3,16 +3,17 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 // Redux imports
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { selectUser } from "../redux/slices/authSlice";
-import { 
-    fetchProductoById, 
-    selectCurrentProduct, 
-    selectProductLoading, 
+import {
+    fetchProductoById,
+    selectCurrentProduct,
+    selectProductLoading,
     selectProductError,
-    clearCurrentProduct 
+    clearCurrentProduct
 } from "../redux/slices/productsSlice";
 import { addToCart, fetchCart } from "../redux/slices/cartSlice";
 import { addToWishlist, fetchWishlist } from "../redux/slices/wishlistSlice";
 import { getUserId } from "../utils/userUtils";
+import Toast from "../components/common/Toast";
 import "../styles/productDetail.css";
 
 export default function ProductDetail() {
@@ -20,18 +21,23 @@ export default function ProductDetail() {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useAppDispatch();
-    
+
     // Estado de Redux
     const user = useAppSelector(selectUser);
     const data = useAppSelector(selectCurrentProduct);
     const loading = useAppSelector(selectProductLoading);
     const err = useAppSelector(selectProductError);
-    
+
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [showToast, setShowToast] = useState(false);
+    const [toastConfig, setToastConfig] = useState({
+        message: "",
+        type: "success"
+    });
 
     useEffect(() => {
         dispatch(fetchProductoById(id));
-        
+
         return () => {
             dispatch(clearCurrentProduct());
         };
@@ -101,12 +107,13 @@ export default function ProductDetail() {
 
         const userId = getUserId(user);
         if (!userId) {
-            alert("No se pudo identificar tu usuario");
+            setToastConfig({ message: "No se pudo identificar tu usuario", type: "error" });
+            setShowToast(true);
             return;
         }
 
         const precioFinal = tieneDescuento ? precioConDescuento : precio;
-        
+
         const result = await dispatch(addToCart({
             productoId: id,
             cantidad: 1,
@@ -117,9 +124,14 @@ export default function ProductDetail() {
             setTimeout(() => {
                 dispatch(fetchCart());
             }, 300);
-            navigate("/cart");
+            setToastConfig({ message: "✓ Producto agregado al carrito", type: "success" });
+            setShowToast(true);
+            setTimeout(() => {
+                navigate("/cart");
+            }, 1000);
         } else if (result.payload) {
-            alert("Error al agregar al carrito: " + result.payload);
+            setToastConfig({ message: "Error: " + result.payload, type: "error" });
+            setShowToast(true);
         }
     };
 
@@ -128,7 +140,8 @@ export default function ProductDetail() {
 
         const userId = getUserId(user);
         if (!userId) {
-            alert("No se pudo identificar tu usuario");
+            setToastConfig({ message: "No se pudo identificar tu usuario", type: "error" });
+            setShowToast(true);
             return;
         }
 
@@ -141,15 +154,26 @@ export default function ProductDetail() {
             setTimeout(() => {
                 dispatch(fetchWishlist());
             }, 300);
-            alert("Producto agregado a la wishlist");
+            setToastConfig({ message: "✓ Producto agregado a la wishlist", type: "success" });
+            setShowToast(true);
         } else if (result.payload) {
-            alert("Error al agregar a la wishlist: " + result.payload);
+            setToastConfig({ message: result.payload, type: "error" });
+            setShowToast(true);
         }
     };
     // ----------------------------------------------------
 
     return (
         <section className="pd-wrap">
+            {showToast && (
+                <Toast
+                    message={toastConfig.message}
+                    type={toastConfig.type}
+                    duration={3000}
+                    onClose={() => setShowToast(false)}
+                />
+            )}
+
             <div className="pd-header">
                 <button className="pd-back" onClick={() => navigate(-1)}>Volver</button>
             </div>
@@ -208,28 +232,7 @@ export default function ProductDetail() {
                         <button className="btn-primary" disabled={sinStock} onClick={handleAddToCart}>
                             {sinStock ? "Sin stock" : "Agregar al carrito"}
                         </button>
-                        <button className="btn-outline" onClick={async () => {
-                            if (!user) { goLogin("wishlist"); return; }
-
-                            const userId = getUserId(user);
-                            if (!userId) {
-                                alert("No se pudo identificar tu usuario");
-                                return;
-                            }
-
-                            const token = user.token;
-                            if (!token) {
-                                alert("No se encontró el token de acceso");
-                                return;
-                            }
-
-                            try {
-                                await addItemToWishlist(token, userId, id, titulo);
-                                navigate('/wishlist');
-                            } catch (error) {
-                                alert("Error al agregar a la wishlist: " + error.message);
-                            }
-                        }}>
+                        <button className="btn-outline" onClick={handleAddToWishlist}>
                             Agregar a Wishlist
                         </button>
                     </div>
