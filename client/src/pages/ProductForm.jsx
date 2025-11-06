@@ -21,14 +21,18 @@ import {
     selectCategorias,
     selectCategoriasLoading,
 } from '../redux/slices/categoriasSlice';
-import StatusMessage from '../components/common/StatusMessage';
+import Toast from '../components/common/Toast';
 import '../styles/productForm.css';
 
 export default function ProductForm() {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const { id } = useParams();
-    
+
+    // Toast state
+    const [showToast, setShowToast] = useState(false);
+    const [toastConfig, setToastConfig] = useState({ message: "", type: "success" });
+
     // Estado de Redux
     const user = useAppSelector(selectUser);
     const currentProducto = useAppSelector(selectCurrentVendedorProducto);
@@ -36,7 +40,7 @@ export default function ProductForm() {
     const loading = useAppSelector(selectVendedorLoading);
     const error = useAppSelector(selectVendedorError);
     const actionSuccess = useAppSelector(selectVendedorActionSuccess);
-    
+
     const isEdit = Boolean(id);
 
     const [formData, setFormData] = useState({
@@ -54,26 +58,36 @@ export default function ProductForm() {
 
     useEffect(() => {
         dispatch(fetchCategorias());
-        
+
         if (isEdit && user?.token) {
             dispatch(fetchVendedorProducto(id));
         }
-        
+
         return () => {
             dispatch(clearCurrentProducto());
         };
     }, [id, user?.token, isEdit, dispatch]);
-    
-    // Auto-ocultar mensaje de éxito
+
+    // Mostrar errores con Toast
+    useEffect(() => {
+        if (error) {
+            setToastConfig({ message: error, type: "error" });
+            setShowToast(true);
+        }
+    }, [error]);
+
+    // Mostrar éxito con Toast
     useEffect(() => {
         if (actionSuccess) {
+            setToastConfig({ message: actionSuccess, type: "success" });
+            setShowToast(true);
             const timer = setTimeout(() => {
                 dispatch(clearVendedorActionSuccess());
             }, 3000);
             return () => clearTimeout(timer);
         }
     }, [actionSuccess, dispatch]);
-    
+
     // Actualizar formData cuando se cargue el producto
     useEffect(() => {
         if (currentProducto && isEdit) {
@@ -138,11 +152,11 @@ export default function ProductForm() {
             if (isEdit && urlToRemove && originalImageUrls.includes(urlToRemove)) {
                 const imagen = formData.imagenes.find(img => img.url === urlToRemove);
                 if (imagen && imagen.id) {
-                    const result = await dispatch(deleteImagenProducto({ 
-                        productoId: id, 
-                        imagenId: imagen.id 
+                    const result = await dispatch(deleteImagenProducto({
+                        productoId: id,
+                        imagenId: imagen.id
                     }));
-                    
+
                     if (result.type !== 'vendedor/deleteImagenProducto/fulfilled') {
                         return; // No eliminar del array local si falló
                     }
@@ -179,7 +193,7 @@ export default function ProductForm() {
 
         if (result.type.includes('/fulfilled')) {
             const producto = result.payload;
-            
+
             // Manejar imágenes adicionales
             if (producto.id && imageUrls.length > 1) {
                 for (let i = 1; i < imageUrls.length; i++) {
@@ -209,17 +223,19 @@ export default function ProductForm() {
 
     return (
         <div className="product-form-container">
+            {showToast && (
+                <Toast
+                    message={toastConfig.message}
+                    type={toastConfig.type}
+                    duration={3000}
+                    onClose={() => setShowToast(false)}
+                />
+            )}
+
             <div className="product-form-header">
                 <h1>{isEdit ? 'Editar Producto' : 'Crear Producto'}</h1>
                 <p>Complete los datos del producto</p>
             </div>
-
-            {error && (
-                <StatusMessage type="error" message={error} />
-            )}
-            {actionSuccess && (
-                <StatusMessage type="success" message={actionSuccess} />
-            )}
 
             <form onSubmit={handleSubmit} className="product-form">
                 <div className="form-group">

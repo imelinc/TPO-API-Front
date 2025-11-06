@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 // Redux imports
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { selectUser } from "../../redux/slices/authSlice";
@@ -11,11 +11,15 @@ import {
     selectAdminOrdersPagination,
     selectExpandedOrder,
 } from "../../redux/slices/adminOrdersSlice";
-import StatusMessage from "../common/StatusMessage";
+import Toast from "../common/Toast";
 
 export default function AdminOrdersList() {
     const dispatch = useAppDispatch();
-    
+
+    // Toast state
+    const [showToast, setShowToast] = useState(false);
+    const [toastConfig, setToastConfig] = useState({ message: "", type: "success" });
+
     // Estado de Redux
     const user = useAppSelector(selectUser);
     const ordenes = useAppSelector(selectAdminOrders);
@@ -29,6 +33,14 @@ export default function AdminOrdersList() {
             dispatch(fetchAllOrders({ page: 0, size: 20 }));
         }
     }, [user, dispatch]);
+
+    // Mostrar errores con Toast
+    useEffect(() => {
+        if (error) {
+            setToastConfig({ message: error, type: "error" });
+            setShowToast(true);
+        }
+    }, [error]);
 
     const formatFecha = (fecha) => {
         const date = new Date(fecha);
@@ -68,11 +80,12 @@ export default function AdminOrdersList() {
 
     return (
         <div className="admin-orders-container">
-            {error && (
-                <StatusMessage
-                    type="error"
-                    message={error}
-                    onClose={() => {}}
+            {showToast && (
+                <Toast
+                    message={toastConfig.message}
+                    type={toastConfig.type}
+                    duration={3000}
+                    onClose={() => setShowToast(false)}
                 />
             )}
 

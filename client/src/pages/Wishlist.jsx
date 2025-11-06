@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 // Redux imports
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
@@ -17,14 +17,18 @@ import {
 } from "../redux/slices/wishlistSlice";
 import { fetchCart } from "../redux/slices/cartSlice";
 import WishlistItemRow from "../components/wishlist/wishlistItemRow";
-import StatusMessage from "../components/common/StatusMessage";
+import Toast from "../components/common/Toast";
 import { isBuyer, getUserId } from "../utils/userUtils";
 import "../styles/wishlist.css";
 
 export default function Wishlist() {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    
+
+    // Toast state
+    const [showToast, setShowToast] = useState(false);
+    const [toastConfig, setToastConfig] = useState({ message: "", type: "success" });
+
     // Estado de Redux
     const user = useAppSelector(selectUser);
     const enrichedItems = useAppSelector(selectWishlistItems);
@@ -32,7 +36,7 @@ export default function Wishlist() {
     const movingToCart = useAppSelector(selectMovingToCart);
     const error = useAppSelector(selectWishlistError);
     const moveResult = useAppSelector(selectMoveResult);
-    
+
     // Derivar valores del usuario
     const token = user?.token;
     const usuarioId = getUserId(user);
@@ -45,11 +49,22 @@ export default function Wishlist() {
         }
     }, [token, usuarioId, dispatch]);
 
+    // Mostrar errores con Toast
+    useEffect(() => {
+        if (error) {
+            setToastConfig({ message: error, type: "error" });
+            setShowToast(true);
+        }
+    }, [error]);
+
     // Mostrar mensaje cuando se complete mover al carrito
     useEffect(() => {
         if (moveResult) {
             const { successCount, failCount } = moveResult;
             if (successCount > 0) {
+                const message = `${successCount} producto(s) agregado(s) al carrito${failCount > 0 ? ` (${failCount} fallaron)` : ''}`;
+                setToastConfig({ message, type: failCount > 0 ? "warning" : "success" });
+                setShowToast(true);
                 // También refrescar el carrito para actualizar el count
                 dispatch(fetchCart());
             }
@@ -74,7 +89,7 @@ export default function Wishlist() {
         }
 
         const result = await dispatch(moveAllToCart());
-        
+
         if (result.type === 'wishlist/moveAllToCart/fulfilled') {
             // Redirigir al carrito después de mover exitosamente
             navigate('/cart');
@@ -83,50 +98,52 @@ export default function Wishlist() {
 
     if (!token) {
         return (
-            <StatusMessage
-                type="error"
-                title="Acceso Denegado"
-                message="Debes iniciar sesión para ver tu lista de deseos"
-                linkTo="/login"
-                linkText="Iniciar Sesión"
-            />
+            <div className="wishlist-page container">
+                <div className="alert error">
+                    <strong>Acceso Denegado</strong>
+                    <p>Debes iniciar sesión para ver tu lista de deseos</p>
+                    <button onClick={() => navigate('/login')}>Iniciar Sesión</button>
+                </div>
+            </div>
         );
     }
 
     if (!usuarioId) {
         return (
-            <StatusMessage
-                type="error"
-                title="Error de Sesión"
-                message="No se detectó tu usuarioId en la sesión"
-                linkTo="/login"
-                linkText="Iniciar Sesión"
-            />
+            <div className="wishlist-page container">
+                <div className="alert error">
+                    <strong>Error de Sesión</strong>
+                    <p>No se detectó tu usuarioId en la sesión</p>
+                    <button onClick={() => navigate('/login')}>Iniciar Sesión</button>
+                </div>
+            </div>
         );
     }
 
     if (!buyer) {
         return (
-            <StatusMessage
-                type="error"
-                title="Permisos Insuficientes"
-                message="Tu cuenta no tiene permisos de comprador"
-                linkTo="/login"
-                linkText="Iniciar Sesión"
-            />
+            <div className="wishlist-page container">
+                <div className="alert error">
+                    <strong>Permisos Insuficientes</strong>
+                    <p>Tu cuenta no tiene permisos de comprador</p>
+                    <button onClick={() => navigate('/login')}>Iniciar Sesión</button>
+                </div>
+            </div>
         );
     }
 
     return (
         <div className="wishlist-page container">
-            <h2>Tu Wishlist</h2>
-            {error && <div className="alert error">{error}</div>}
-            {moveResult && (
-                <div className="alert success">
-                    {moveResult.successCount} producto(s) agregado(s) al carrito
-                    {moveResult.failCount > 0 && ` (${moveResult.failCount} fallaron)`}
-                </div>
+            {showToast && (
+                <Toast
+                    message={toastConfig.message}
+                    type={toastConfig.type}
+                    duration={3000}
+                    onClose={() => setShowToast(false)}
+                />
             )}
+
+            <h2>Tu Wishlist</h2>
 
             <div className="wishlist-container">
                 {loading ? (
