@@ -2,13 +2,12 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 // Redux imports
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { 
-    login, 
-    selectAuthLoading, 
-    selectAuthError, 
+import {
+    login,
+    selectAuthLoading,
+    selectAuthError,
     selectLoginSuccess,
-    selectUserRole,
-    clearAuthError 
+    selectUserRole
 } from "../redux/slices/authSlice";
 import "../styles/auth.css";
 
@@ -16,11 +15,11 @@ export default function Login() {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const location = useLocation();
-    
+
     // Estado local del formulario
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    
+
     // Estado de Redux
     const loading = useAppSelector(selectAuthLoading);
     const error = useAppSelector(selectAuthError);
@@ -30,11 +29,6 @@ export default function Login() {
     const params = new URLSearchParams(location.search);
     const redirect = params.get("redirect") || "/";
     const intent = params.get("intent") || ""; // "cart" | "wishlist"
-
-    // Limpiar errores al montar el componente
-    useEffect(() => {
-        dispatch(clearAuthError());
-    }, [dispatch]);
 
     // Redirigir cuando el login sea exitoso
     useEffect(() => {

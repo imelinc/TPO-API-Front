@@ -7,8 +7,7 @@ import {
     selectAuthLoading,
     selectAuthError,
     selectRegisterSuccess,
-    selectUserRole,
-    clearAuthError
+    selectUserRole
 } from "../redux/slices/authSlice";
 import "../styles/auth.css";
 
@@ -21,21 +20,16 @@ const initial = {
 export default function Register() {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    
+
     const [form, setForm] = useState(initial);
-    
+
     // Estado de Redux
     const loading = useAppSelector(selectAuthLoading);
     const error = useAppSelector(selectAuthError);
     const registerSuccess = useAppSelector(selectRegisterSuccess);
     const userRole = useAppSelector(selectUserRole);
-    
-    const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
-    // Limpiar errores al montar
-    useEffect(() => {
-        dispatch(clearAuthError());
-    }, [dispatch]);
+    const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
     // Redirigir cuando el registro sea exitoso
     useEffect(() => {
