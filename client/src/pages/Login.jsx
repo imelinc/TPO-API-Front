@@ -1,53 +1,54 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-// Redux imports
-import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import {
-    login,
-    selectAuthLoading,
-    selectAuthError,
-    selectLoginSuccess,
-    selectUserRole
-} from "../redux/slices/authSlice";
+import { loginApi } from "../api/auth"; // asegúrate que devuelva exactamente el JSON que mostraste
+import { useAuth } from "../context/AuthContext";
 import "../styles/auth.css";
 
 export default function Login() {
-    const dispatch = useAppDispatch();
-    const navigate = useNavigate();
-    const location = useLocation();
-
-    // Estado local del formulario
+    const { setUser } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
-    // Estado de Redux
-    const loading = useAppSelector(selectAuthLoading);
-    const error = useAppSelector(selectAuthError);
-    const loginSuccess = useAppSelector(selectLoginSuccess);
-    const userRole = useAppSelector(selectUserRole);
+    const [msg, setMsg] = useState({ type: "", text: "" });
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const params = new URLSearchParams(location.search);
     const redirect = params.get("redirect") || "/";
     const intent = params.get("intent") || ""; // "cart" | "wishlist"
 
-    // Redirigir cuando el login sea exitoso
-    useEffect(() => {
-        if (loginSuccess) {
+    const onSubmit = async (e) => {
+        e.preventDefault();
+        setMsg({ type: "", text: "" });
+        setLoading(true);
+        try {
+            const data = await loginApi({ email, password });
+            // data = { access_token, user: { id, username, email, rol, ... } }
+            setUser({
+                token: data.access_token,       // ⬅ NECESARIO para Authorization
+                id: data.user.id,               // ⬅ NECESARIO para /carritos/usuario/{id}
+                username: data.user.username,
+                email: data.user.email,
+                rol: data.user.rol,             // "COMPRADOR" | "VENDEDOR" | "ADMIN"
+                nombre: data.user.nombre,
+                apellido: data.user.apellido,
+            });
+
+            setMsg({ type: "success", text: "Inicio de sesión exitoso. Redirigiendo..." });
+
             // Redirigir según el rol
             let redirectTo = redirect;
-            if (userRole === "ADMIN") {
+            if (data.user.rol === "ADMIN") {
                 redirectTo = "/admin";
-            } else if (userRole === "VENDEDOR") {
+            } else if (data.user.rol === "VENDEDOR") {
                 redirectTo = "/dashboard";
             }
             navigate(redirectTo, { replace: true });
+        } catch (err) {
+            setMsg({ type: "error", text: err.message || "Credenciales inválidas" });
+        } finally {
+            setLoading(false);
         }
-    }, [loginSuccess, userRole, navigate, redirect]);
-
-    const onSubmit = async (e) => {
-        e.preventDefault();
-        // Dispatch del thunk de Redux
-        dispatch(login({ email, password }));
     };
 
     return (
@@ -64,8 +65,7 @@ export default function Login() {
                     <h2>Iniciá Sesión</h2>
                     <p className="auth-muted">Accedé con tu cuenta de PressPlay.</p>
 
-                    {error && <div className="alert error">{error}</div>}
-                    {loginSuccess && <div className="alert success">Inicio de sesión exitoso. Redirigiendo...</div>}
+                    {msg.text && <div className={`alert ${msg.type}`}>{msg.text}</div>}
 
                     <form onSubmit={onSubmit}>
                         <div className="field">

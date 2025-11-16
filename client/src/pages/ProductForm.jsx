@@ -1,47 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-// Redux imports
-import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { selectUser } from '../redux/slices/authSlice';
-import {
-    fetchVendedorProducto,
-    createVendedorProducto,
-    updateVendedorProducto,
-    addImagenProducto,
-    deleteImagenProducto,
-    selectCurrentVendedorProducto,
-    selectVendedorLoading,
-    selectVendedorError,
-    selectVendedorActionSuccess,
-    clearActionSuccess as clearVendedorActionSuccess,
-    clearCurrentProducto,
-} from '../redux/slices/vendedorSlice';
-import {
-    fetchCategorias,
-    selectCategorias,
-    selectCategoriasLoading,
-} from '../redux/slices/categoriasSlice';
-import Toast from '../components/common/Toast';
+import { useAuth } from '../context/AuthContext';
+import { createProducto, updateProducto, getProducto, addImagenToProducto, deleteImagenFromProducto } from '../api/vendedor';
+import { getAllCategorias } from '../api/categorias';
+import StatusMessage from '../components/common/StatusMessage';
 import '../styles/productForm.css';
 
 export default function ProductForm() {
-    const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const { id } = useParams();
-
-    // Toast state
-    const [showToast, setShowToast] = useState(false);
-    const [toastConfig, setToastConfig] = useState({ message: "", type: "success" });
-
-    // Estado de Redux
-    const user = useAppSelector(selectUser);
-    const currentProducto = useAppSelector(selectCurrentVendedorProducto);
-    const categorias = useAppSelector(selectCategorias);
-    const loading = useAppSelector(selectVendedorLoading);
-    const error = useAppSelector(selectVendedorError);
-    const actionSuccess = useAppSelector(selectVendedorActionSuccess);
-
+    const { id } = useParams(); // Si hay ID, es edición; si no, es creación
+    const { user } = useAuth();
     const isEdit = Boolean(id);
+
+    const [loading, setLoading] = useState(false);
+    const [categorias, setCategorias] = useState([]);
+    const [message, setMessage] = useState({ type: '', text: '' });
 
     const [formData, setFormData] = useState({
         titulo: '',
@@ -57,62 +30,48 @@ export default function ProductForm() {
     const [originalImageUrls, setOriginalImageUrls] = useState([]); // Para rastrear imágenes originales
 
     useEffect(() => {
-        dispatch(fetchCategorias());
-
+        loadCategorias();
         if (isEdit && user?.token) {
-            dispatch(fetchVendedorProducto(id));
+            loadProducto();
         }
+    }, [id, user?.token]);
 
-        return () => {
-            dispatch(clearCurrentProducto());
-        };
-    }, [id, user?.token, isEdit, dispatch]);
-
-    // Mostrar errores con Toast
-    useEffect(() => {
-        if (error) {
-            setToastConfig({ message: error, type: "error" });
-            setShowToast(true);
+    const loadCategorias = async () => {
+        try {
+            const data = await getAllCategorias(user?.token);
+            setCategorias(data);
+        } catch (error) {
+            console.error('Error al cargar categorías:', error);
+            setMessage({ type: 'error', text: `Error al cargar categorías: ${error.message}` });
         }
-    }, [error]);
+    };
 
-    // Mostrar éxito con Toast
-    useEffect(() => {
-        if (actionSuccess) {
-            setToastConfig({ message: actionSuccess, type: "success" });
-            setShowToast(true);
-            const timer = setTimeout(() => {
-                dispatch(clearVendedorActionSuccess());
-            }, 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [actionSuccess, dispatch]);
-
-    // Actualizar formData cuando se cargue el producto
-    useEffect(() => {
-        if (currentProducto && isEdit) {
+    const loadProducto = async () => {
+        try {
+            setLoading(true);
+            const producto = await getProducto(user?.token, id);
             setFormData({
-                titulo: currentProducto.titulo || '',
-                descripcion: currentProducto.descripcion || '',
-                precio: currentProducto.precio?.toString() || '',
-                stock: currentProducto.stock?.toString() || '',
-                categoriaId: currentProducto.categoriaId?.toString() || '',
-                imagenUrl: currentProducto.imagenUrl || '',
-                imagenes: currentProducto.imagenes || []
+                titulo: producto.titulo || '',
+                descripcion: producto.descripcion || '',
+                precio: producto.precio?.toString() || '',
+                stock: producto.stock?.toString() || '',
+                categoriaId: producto.categoriaId?.toString() || '',
+                imagenUrl: producto.imagenUrl || '',
+                imagenes: producto.imagenes || []
             });
 
             // Cargar URLs de imágenes: principal primero, luego adicionales
             const urls = [];
 
             // Agregar imagen principal si existe
-            if (currentProducto.imagenUrl) {
-                urls.push(currentProducto.imagenUrl);
+            if (producto.imagenUrl) {
+                urls.push(producto.imagenUrl);
             }
 
             // Agregar imágenes adicionales (filtrar la principal si está duplicada)
-            if (currentProducto.imagenes && currentProducto.imagenes.length > 0) {
-                currentProducto.imagenes.forEach(img => {
-                    if (img.url && img.url !== currentProducto.imagenUrl) {
+            if (producto.imagenes && producto.imagenes.length > 0) {
+                producto.imagenes.forEach(img => {
+                    if (img.url && img.url !== producto.imagenUrl) {
                         urls.push(img.url);
                     }
                 });
@@ -123,8 +82,13 @@ export default function ProductForm() {
 
             setImageUrls(urls);
             setOriginalImageUrls([...urls]); // Guardar copia de las imágenes originales
+
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Error al cargar el producto' });
+        } finally {
+            setLoading(false);
         }
-    }, [currentProducto, isEdit]);
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -150,16 +114,17 @@ export default function ProductForm() {
 
             // Si estamos en modo edición y la imagen existía originalmente, eliminarla del servidor
             if (isEdit && urlToRemove && originalImageUrls.includes(urlToRemove)) {
-                const imagen = formData.imagenes.find(img => img.url === urlToRemove);
-                if (imagen && imagen.id) {
-                    const result = await dispatch(deleteImagenProducto({
-                        productoId: id,
-                        imagenId: imagen.id
-                    }));
-
-                    if (result.type !== 'vendedor/deleteImagenProducto/fulfilled') {
-                        return; // No eliminar del array local si falló
+                try {
+                    // Buscar el ID de la imagen en formData.imagenes
+                    const imagen = formData.imagenes.find(img => img.url === urlToRemove);
+                    if (imagen && imagen.id) {
+                        await deleteImagenFromProducto(user?.token, id, imagen.id);
+                        console.log('Imagen eliminada del servidor:', urlToRemove);
                     }
+                } catch (error) {
+                    console.error('Error al eliminar imagen del servidor:', error);
+                    setMessage({ type: 'error', text: 'Error al eliminar la imagen' });
+                    return; // No eliminar del array local si falló en el servidor
                 }
             }
 
@@ -172,43 +137,62 @@ export default function ProductForm() {
         e.preventDefault();
 
         if (!formData.titulo.trim() || !formData.precio || !formData.categoriaId) {
+            setMessage({ type: 'error', text: 'Por favor complete todos los campos obligatorios' });
             return;
         }
 
-        const productData = {
-            titulo: formData.titulo,
-            descripcion: formData.descripcion,
-            precio: parseFloat(formData.precio),
-            stock: parseInt(formData.stock) || 0,
-            categoriaId: parseInt(formData.categoriaId),
-            imagenUrl: imageUrls[0] || ''
-        };
+        try {
+            setLoading(true);
+            setMessage({ type: '', text: '' });
 
-        let result;
-        if (isEdit) {
-            result = await dispatch(updateVendedorProducto({ id, producto: productData }));
-        } else {
-            result = await dispatch(createVendedorProducto(productData));
-        }
+            const productData = {
+                titulo: formData.titulo,
+                descripcion: formData.descripcion,
+                precio: parseFloat(formData.precio),
+                stock: parseInt(formData.stock) || 0,
+                categoriaId: parseInt(formData.categoriaId),
+                imagenUrl: imageUrls[0] || '' // Primera URL como imagen principal
+            };
 
-        if (result.type.includes('/fulfilled')) {
-            const producto = result.payload;
+            let producto;
+            if (isEdit) {
+                producto = await updateProducto(user?.token, id, productData);
+                setMessage({ type: 'success', text: 'Producto actualizado correctamente' });
+            } else {
+                producto = await createProducto(user?.token, productData);
+                setMessage({ type: 'success', text: 'Producto creado correctamente' });
+            }
 
             // Manejar imágenes adicionales
             if (producto.id && imageUrls.length > 1) {
                 for (let i = 1; i < imageUrls.length; i++) {
                     const url = imageUrls[i].trim();
-                    if (url && (!isEdit || !originalImageUrls.includes(url))) {
-                        await dispatch(addImagenProducto({ productoId: producto.id, url }));
+                    if (url) {
+                        // Solo agregar si es una nueva imagen (no estaba en las originales)
+                        if (!isEdit || !originalImageUrls.includes(url)) {
+                            try {
+                                await addImagenToProducto(user?.token, producto.id, url);
+                            } catch (imgError) {
+                                console.error('Error al agregar imagen:', imgError);
+                            }
+                        }
                     }
                 }
             }
 
-            // Redirigir después de un breve delay
+            // Redirigir después de un breve delay según el rol
             setTimeout(() => {
                 const redirectPath = user?.rol === "ADMIN" ? '/admin' : '/dashboard';
                 navigate(redirectPath);
             }, 1500);
+
+        } catch (error) {
+            setMessage({
+                type: 'error',
+                text: isEdit ? 'Error al actualizar el producto' : 'Error al crear el producto'
+            });
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -223,19 +207,14 @@ export default function ProductForm() {
 
     return (
         <div className="product-form-container">
-            {showToast && (
-                <Toast
-                    message={toastConfig.message}
-                    type={toastConfig.type}
-                    duration={3000}
-                    onClose={() => setShowToast(false)}
-                />
-            )}
-
             <div className="product-form-header">
                 <h1>{isEdit ? 'Editar Producto' : 'Crear Producto'}</h1>
                 <p>Complete los datos del producto</p>
             </div>
+
+            {message.text && (
+                <StatusMessage type={message.type} message={message.text} />
+            )}
 
             <form onSubmit={handleSubmit} className="product-form">
                 <div className="form-group">

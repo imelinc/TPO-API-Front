@@ -1,91 +1,88 @@
 import { useState, useEffect } from 'react';
-// Redux imports
-import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { selectUser } from '../../redux/slices/authSlice';
-import {
-    fetchCategorias,
-    createNewCategoria,
-    deleteExistingCategoria,
-    selectCategorias,
-    selectCategoriasLoading,
-    selectCategoriasCreating,
-    selectCategoriasError,
-} from '../../redux/slices/categoriasSlice';
-import Toast from '../common/Toast';
+import { useAuth } from '../../context/AuthContext';
+import { getAllCategorias, createCategoria, deleteCategoria } from '../../api/categorias';
+import StatusMessage from '../common/StatusMessage';
 import '../../styles/categoriasList.css';
 
 export default function CategoriasList() {
-    const dispatch = useAppDispatch();
-
-    // Estado de Redux
-    const user = useAppSelector(selectUser);
-    const categorias = useAppSelector(selectCategorias);
-    const loading = useAppSelector(selectCategoriasLoading);
-    const creating = useAppSelector(selectCategoriasCreating);
-    const error = useAppSelector(selectCategoriasError);
-
+    const { user } = useAuth();
+    const [categorias, setCategorias] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [message, setMessage] = useState({ type: '', text: '' });
     const [showForm, setShowForm] = useState(false);
     const [newCategoriaNombre, setNewCategoriaNombre] = useState('');
-    const [showToast, setShowToast] = useState(false);
-    const [toastConfig, setToastConfig] = useState({
-        message: "",
-        type: "success"
-    });
+    const [creatingCategoria, setCreatingCategoria] = useState(false);
 
     useEffect(() => {
         if (user?.token) {
-            dispatch(fetchCategorias());
+            loadCategorias();
         }
-    }, [user?.token, dispatch]);
+    }, [user?.token]);
 
-    // Mostrar errores con toast
-    useEffect(() => {
-        if (error) {
-            setToastConfig({ message: error, type: "error" });
-            setShowToast(true);
+    const loadCategorias = async () => {
+        try {
+            setLoading(true);
+            setMessage({ type: '', text: '' });
+            const data = await getAllCategorias(user?.token);
+            setCategorias(data);
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Error al cargar las categorías' });
+        } finally {
+            setLoading(false);
         }
-    }, [error]);
+    };
 
     const handleCreateCategoria = async (e) => {
         e.preventDefault();
 
         if (!newCategoriaNombre.trim()) {
+            setMessage({ type: 'error', text: 'El nombre de la categoría es obligatorio' });
             return;
         }
 
-        const result = await dispatch(createNewCategoria({
-            nombre: newCategoriaNombre.trim()
-        }));
+        try {
+            setCreatingCategoria(true);
+            setMessage({ type: '', text: '' });
 
-        if (result.type === 'categorias/createNewCategoria/fulfilled') {
+            const nuevaCategoria = await createCategoria(user?.token, {
+                nombre: newCategoriaNombre.trim()
+            });
+
+            // Agregar la nueva categoría a la lista
+            setCategorias(prev => [...prev, nuevaCategoria]);
             setNewCategoriaNombre('');
             setShowForm(false);
-            setToastConfig({ message: "✓ Categoría creada exitosamente", type: "success" });
-            setShowToast(true);
-        } else if (result.type === 'categorias/createNewCategoria/rejected') {
-            setToastConfig({ message: result.payload || "Error al crear categoría", type: "error" });
-            setShowToast(true);
+            setMessage({ type: 'success', text: 'Categoría creada correctamente' });
+
+            // Limpiar el mensaje después de 3 segundos
+            setTimeout(() => {
+                setMessage({ type: '', text: '' });
+            }, 3000);
+
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Error al crear la categoría' });
+        } finally {
+            setCreatingCategoria(false);
         }
     };
 
     const handleCancelCreate = () => {
         setShowForm(false);
         setNewCategoriaNombre('');
+        setMessage({ type: '', text: '' });
     };
 
     const handleDelete = async (categoriaId) => {
-        if (!window.confirm('¿Estás seguro de eliminar esta categoría?')) return;
+        if (!window.confirm('¿Estás seguro de eliminar esta categoría?')) {
+            return;
+        }
 
-        const result = await dispatch(deleteExistingCategoria(categoriaId));
-
-        // Si se eliminó exitosamente, refrescar la lista
-        if (result.type === 'categorias/deleteExistingCategoria/fulfilled') {
-            setToastConfig({ message: "✓ Categoría eliminada exitosamente", type: "success" });
-            setShowToast(true);
-            dispatch(fetchCategorias());
-        } else if (result.type === 'categorias/deleteExistingCategoria/rejected') {
-            setToastConfig({ message: result.payload || "Error al eliminar categoría", type: "error" });
-            setShowToast(true);
+        try {
+            await deleteCategoria(user?.token, categoriaId);
+            // Remover la categoría de la lista local sin mostrar mensaje
+            setCategorias(prev => prev.filter(c => c.id !== categoriaId));
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Error al eliminar la categoría' });
         }
     };
 
@@ -95,15 +92,6 @@ export default function CategoriasList() {
 
     return (
         <div className="categorias-container">
-            {showToast && (
-                <Toast
-                    message={toastConfig.message}
-                    type={toastConfig.type}
-                    duration={3000}
-                    onClose={() => setShowToast(false)}
-                />
-            )}
-
             <div className="categorias-header">
                 <div className="categorias-title">
                     <h2>Categorías</h2>
@@ -118,6 +106,10 @@ export default function CategoriasList() {
                     </button>
                 )}
             </div>
+
+            {message.text && (
+                <StatusMessage type={message.type} message={message.text} />
+            )}
 
             {showForm && (
                 <div className="categoria-form-container">
@@ -139,16 +131,16 @@ export default function CategoriasList() {
                                 type="button"
                                 onClick={handleCancelCreate}
                                 className="btn-cancel"
-                                disabled={creating}
+                                disabled={creatingCategoria}
                             >
                                 Cancelar
                             </button>
                             <button
                                 type="submit"
                                 className="btn-primary"
-                                disabled={creating}
+                                disabled={creatingCategoria}
                             >
-                                {creating ? 'Creando...' : 'Crear'}
+                                {creatingCategoria ? 'Creando...' : 'Crear'}
                             </button>
                         </div>
                     </form>

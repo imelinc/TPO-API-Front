@@ -1,24 +1,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// Redux imports
-import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { selectUser } from '../redux/slices/authSlice';
-import { performCheckout, fetchCart, selectCheckingOut } from '../redux/slices/cartSlice';
+import { useAuth } from '../context/AuthContext';
+import { useCartWishlist } from '../context/CartWishlistContext';
 import { getUserId } from '../utils/userUtils';
+import { doCheckout } from '../api/cart';
 import { LockClosedIcon } from '@heroicons/react/24/solid';
 import '../styles/checkout.css';
 
 const Checkout = () => {
-    const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    
-    // Estado de Redux
-    const user = useAppSelector(selectUser);
-    const isProcessing = useAppSelector(selectCheckingOut);
-    
-    // Derivar valores del usuario
+    const { user } = useAuth();
+    const { refreshCartCount } = useCartWishlist();
     const token = user?.token;
     const usuarioId = getUserId(user);
+    const [isProcessing, setIsProcessing] = useState(false);
     const [errors, setErrors] = useState({});
     const [formData, setFormData] = useState({
         cardNumber: '',
@@ -122,19 +117,23 @@ const Checkout = () => {
             return;
         }
 
-        // Dispatch del thunk de Redux
-        const result = await dispatch(performCheckout());
+        try {
+            setIsProcessing(true);
+            // Completar la orden en el backend
+            await doCheckout(token, usuarioId);
 
-        if (result.type === 'cart/performCheckout/fulfilled') {
-            // Refrescar el carrito para actualizar el count a 0
-            setTimeout(() => {
-                dispatch(fetchCart());
+            // Refrescar el contador del carrito (debería ser 0 ahora)
+            setTimeout(async () => {
+                await refreshCartCount();
             }, 300);
 
             // Redirigir a la página de éxito
             navigate('/payment-success');
-        } else if (result.payload) {
+        } catch (error) {
+            console.error('Error al procesar el pago:', error);
             alert('Hubo un error al procesar el pago. Por favor intenta nuevamente.');
+        } finally {
+            setIsProcessing(false);
         }
     };
 

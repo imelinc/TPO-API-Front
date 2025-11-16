@@ -1,24 +1,20 @@
-import { Link, useNavigate } from "react-router-dom";
-// Redux imports
-import { useAppSelector } from "../redux/hooks";
-import { selectUser } from "../redux/slices/authSlice";
+import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
+import StatusMessage from "../components/common/StatusMessage";
 import "../styles/profile.css";
 
 export default function Profile() {
-    const user = useAppSelector(selectUser);
-    const navigate = useNavigate();
+    const { user } = useAuth();
 
     if (!user) {
         return (
-            <div className="profile-page">
-                <div className="container">
-                    <div className="alert error">
-                        <strong>Acceso Denegado</strong>
-                        <p>Debes iniciar sesión para ver tu perfil</p>
-                        <button onClick={() => navigate('/login')}>Iniciar Sesión</button>
-                    </div>
-                </div>
-            </div>
+            <StatusMessage
+                type="error"
+                title="Acceso Denegado"
+                message="Debes iniciar sesión para ver tu perfil"
+                linkTo="/login"
+                linkText="Iniciar Sesión"
+            />
         );
     }
 

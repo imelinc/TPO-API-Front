@@ -1,9 +1,8 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useAppSelector } from "../redux/hooks";
-import { selectUser } from "../redux/slices/authSlice";
+import { useAuth } from "../context/AuthContext";
 
 export default function AdminRoute({ children }) {
-    const user = useAppSelector(selectUser);
+    const { user } = useAuth();
     const location = useLocation();
 
     if (!user) {

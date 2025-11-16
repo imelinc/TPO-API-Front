@@ -1,57 +1,44 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// Redux imports
-import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { selectUser } from '../../redux/slices/authSlice';
-import {
-    fetchVendedorProductos,
-    deleteVendedorProducto,
-    selectVendedorProductos,
-    selectVendedorLoading,
-    selectVendedorError,
-} from '../../redux/slices/vendedorSlice';
+import { useAuth } from '../../context/AuthContext';
+import { getVendedorProductos, deleteProducto } from '../../api/vendedor';
 import { getUsuarioById } from '../../api/usuarios';
-import Toast from '../common/Toast';
+import StatusMessage from '../common/StatusMessage';
 import '../../styles/productList.css';
 
 export default function ProductList() {
     const navigate = useNavigate();
-    const dispatch = useAppDispatch();
-
-    // Estado de Redux
-    const user = useAppSelector(selectUser);
-    const productos = useAppSelector(selectVendedorProductos);
-    const loading = useAppSelector(selectVendedorLoading);
-    const error = useAppSelector(selectVendedorError);
-
+    const { user } = useAuth();
+    const [productos, setProductos] = useState([]);
     const [vendedores, setVendedores] = useState({}); // Cache de vendedores {id: {nombre, apellido}}
-    const [showToast, setShowToast] = useState(false);
-    const [toastConfig, setToastConfig] = useState({
-        message: "",
-        type: "success"
-    });
+    const [loading, setLoading] = useState(true);
+    const [message, setMessage] = useState({ type: '', text: '' });
 
     useEffect(() => {
         if (user?.token) {
-            dispatch(fetchVendedorProductos({ page: 0, size: 50 }));
+            loadProductos();
         }
-    }, [user?.token, dispatch]);
+    }, [user?.token]);
 
-    // Cargar vendedores si es admin
-    useEffect(() => {
-        if (user?.rol === "ADMIN" && productos.length > 0) {
-            loadVendedores(productos);
+    const loadProductos = async () => {
+        try {
+            setLoading(true);
+            setMessage({ type: '', text: '' });
+            const data = await getVendedorProductos(user?.token);
+            // El backend devuelve directamente un array de ProductoDTO
+            const productosArray = Array.isArray(data) ? data : [];
+            setProductos(productosArray);
+
+            // Si es ADMIN, cargar información de los vendedores
+            if (user?.rol === "ADMIN") {
+                await loadVendedores(productosArray);
+            }
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Error al cargar los productos' });
+        } finally {
+            setLoading(false);
         }
-    }, [productos, user?.rol]);
-
-    // Mostrar errores con toast
-    useEffect(() => {
-        if (error) {
-            setToastConfig({ message: error, type: "error" });
-            setShowToast(true);
-        }
-    }, [error]);
-
+    };
 
     const loadVendedores = async (productosArray) => {
         try {
@@ -93,18 +80,21 @@ export default function ProductList() {
     };
 
     const handleDelete = async (productoId) => {
-        if (!window.confirm('¿Estás seguro de eliminar este producto?')) return;
+        if (!window.confirm('¿Estás seguro de eliminar este producto?')) {
+            return;
+        }
 
-        const result = await dispatch(deleteVendedorProducto(productoId));
-
-        // Si se eliminó exitosamente, refrescar la lista
-        if (result.type === 'vendedor/deleteVendedorProducto/fulfilled') {
-            setToastConfig({ message: "✓ Producto eliminado exitosamente", type: "success" });
-            setShowToast(true);
-            dispatch(fetchVendedorProductos({ page: 0, size: 50 }));
-        } else if (result.type === 'vendedor/deleteVendedorProducto/rejected') {
-            setToastConfig({ message: result.payload || "Error al eliminar producto", type: "error" });
-            setShowToast(true);
+        try {
+            await deleteProducto(user?.token, productoId);
+            // Remover el producto de la lista local y mostrar mensaje de éxito
+            setProductos(prev => prev.filter(p => p.id !== productoId));
+            setMessage({ type: 'success', text: 'Producto eliminado correctamente' });
+            // Auto-ocultar mensaje después de 3 segundos
+            setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Error al eliminar el producto' });
+            // Auto-ocultar mensaje de error después de 5 segundos
+            setTimeout(() => setMessage({ type: '', text: '' }), 5000);
         }
     };
 
@@ -122,12 +112,11 @@ export default function ProductList() {
 
     return (
         <div className="product-list-container">
-            {showToast && (
-                <Toast
-                    message={toastConfig.message}
-                    type={toastConfig.type}
-                    duration={3000}
-                    onClose={() => setShowToast(false)}
+            {message.text && (
+                <StatusMessage
+                    type={message.type}
+                    message={message.text}
+                    onClose={() => setMessage({ type: '', text: '' })}
                 />
             )}
 

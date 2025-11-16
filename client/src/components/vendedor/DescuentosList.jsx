@@ -1,36 +1,18 @@
 import { useState, useEffect } from 'react';
-// Redux imports
-import { useAppDispatch, useAppSelector } from '../../redux/hooks';
-import { selectUser } from '../../redux/slices/authSlice';
-import { fetchVendedorProductos, selectVendedorProductos, selectVendedorLoading } from '../../redux/slices/vendedorSlice';
-import {
-    fetchDescuentoByProducto,
-    createNewDescuento,
-    deleteExistingDescuento,
-    selectDescuentosCreating,
-    selectDescuentosError,
-} from '../../redux/slices/descuentosSlice';
-import Toast from '../common/Toast';
+import { useAuth } from '../../context/AuthContext';
+import { getVendedorProductos } from '../../api/vendedor';
+import { createDescuento, deleteDescuento, getDescuentoByProducto } from '../../api/descuentos';
+import StatusMessage from '../common/StatusMessage';
 import '../../styles/descuentosList.css';
 
 export default function DescuentosList() {
-    const dispatch = useAppDispatch();
-
-    // Estado de Redux
-    const user = useAppSelector(selectUser);
-    const productos = useAppSelector(selectVendedorProductos);
-    const loading = useAppSelector(selectVendedorLoading);
-    const creating = useAppSelector(selectDescuentosCreating);
-    const error = useAppSelector(selectDescuentosError);
-
+    const { user } = useAuth();
+    const [productos, setProductos] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [message, setMessage] = useState({ type: '', text: '' });
     const [selectedProducto, setSelectedProducto] = useState(null);
-    const [descuentoCompleto, setDescuentoCompleto] = useState(null);
+    const [descuentoCompleto, setDescuentoCompleto] = useState(null); // Guardar el descuento completo
     const [showModal, setShowModal] = useState(false);
-    const [showToast, setShowToast] = useState(false);
-    const [toastConfig, setToastConfig] = useState({
-        message: "",
-        type: "success"
-    });
     const [formData, setFormData] = useState({
         porcentajeDescuento: '',
         fechaInicio: '',
@@ -41,26 +23,34 @@ export default function DescuentosList() {
 
     useEffect(() => {
         if (user?.token) {
-            dispatch(fetchVendedorProductos({ page: 0, size: 50 }));
+            loadProductos();
         }
-    }, [user?.token, dispatch]);
+    }, [user?.token]);
 
-    // Mostrar errores con toast
-    useEffect(() => {
-        if (error) {
-            setToastConfig({ message: error, type: "error" });
-            setShowToast(true);
+    const loadProductos = async () => {
+        try {
+            setLoading(true);
+            setMessage({ type: '', text: '' });
+            const data = await getVendedorProductos(user?.token);
+            const productosArray = Array.isArray(data) ? data : [];
+            setProductos(productosArray);
+        } catch (error) {
+            setMessage({ type: 'error', text: 'Error al cargar los productos' });
+        } finally {
+            setLoading(false);
         }
-    }, [error]);
+    };
 
     const handleProductoClick = async (producto) => {
         setSelectedProducto(producto);
 
         if (producto.tieneDescuento) {
-            const result = await dispatch(fetchDescuentoByProducto(producto.id));
-            if (result.type === 'descuentos/fetchDescuentoByProducto/fulfilled') {
-                setDescuentoCompleto(result.payload.descuento);
+            try {
+                const descuento = await getDescuentoByProducto(user?.token, producto.id);
+                setDescuentoCompleto(descuento);
                 setShowModal(true);
+            } catch (error) {
+                setMessage({ type: 'error', text: 'Error al cargar el descuento' });
             }
         } else {
             setDescuentoCompleto(null);
@@ -93,48 +83,39 @@ export default function DescuentosList() {
 
         if (!selectedProducto) return;
 
-        const descuentoData = {
-            porcentajeDescuento: parseFloat(formData.porcentajeDescuento),
-            fechaInicio: new Date(formData.fechaInicio).toISOString(),
-            fechaFin: new Date(formData.fechaFin).toISOString(),
-            activo: formData.activo,
-            descripcion: formData.descripcion || 'Descuento especial'
-        };
+        try {
+            const descuentoData = {
+                porcentajeDescuento: parseFloat(formData.porcentajeDescuento),
+                fechaInicio: new Date(formData.fechaInicio).toISOString(),
+                fechaFin: new Date(formData.fechaFin).toISOString(),
+                activo: formData.activo,
+                descripcion: formData.descripcion || 'Descuento especial'
+            };
 
-        const result = await dispatch(createNewDescuento({
-            productoId: selectedProducto.id,
-            descuentoData
-        }));
+            const resultado = await createDescuento(user?.token, selectedProducto.id, descuentoData);
 
-        if (result.type === 'descuentos/createNewDescuento/fulfilled') {
-            setToastConfig({ message: "✓ Descuento creado exitosamente", type: "success" });
-            setShowToast(true);
-            dispatch(fetchVendedorProductos({ page: 0, size: 50 }));
+            setMessage({ type: 'success', text: 'Descuento creado exitosamente' });
             handleCloseModal();
-        } else if (result.type === 'descuentos/createNewDescuento/rejected') {
-            setToastConfig({ message: result.payload || "Error al crear descuento", type: "error" });
-            setShowToast(true);
+            setTimeout(() => loadProductos(), 500);
+        } catch (error) {
+            console.error('Error al crear descuento:', error);
+            setMessage({ type: 'error', text: error.message || 'Error al crear el descuento' });
         }
-    };
-
-    const handleDeleteDescuento = async () => {
+    }; const handleDeleteDescuento = async () => {
         if (!descuentoCompleto) return;
-        if (!window.confirm('¿Estás seguro de eliminar este descuento?')) return;
 
-        const result = await dispatch(deleteExistingDescuento({
-            productoId: selectedProducto.id,
-            descuentoId: descuentoCompleto.id
-        }));
+        if (!window.confirm('¿Estás seguro de eliminar este descuento?')) {
+            return;
+        }
 
-        if (result.type === 'descuentos/deleteExistingDescuento/fulfilled') {
-            setToastConfig({ message: "✓ Descuento eliminado exitosamente", type: "success" });
-            setShowToast(true);
-            // Refrescar productos para actualizar el estado de descuentos
-            dispatch(fetchVendedorProductos({ page: 0, size: 50 }));
+        try {
+            await deleteDescuento(user?.token, selectedProducto.id, descuentoCompleto.id);
+
+            setMessage({ type: 'success', text: 'Descuento eliminado exitosamente' });
             handleCloseModal();
-        } else if (result.type === 'descuentos/deleteExistingDescuento/rejected') {
-            setToastConfig({ message: result.payload || "Error al eliminar descuento", type: "error" });
-            setShowToast(true);
+            setTimeout(() => loadProductos(), 500);
+        } catch (error) {
+            setMessage({ type: 'error', text: error.message || 'Error al eliminar el descuento' });
         }
     };
 
@@ -174,15 +155,6 @@ export default function DescuentosList() {
 
     return (
         <div className="descuentos-container">
-            {showToast && (
-                <Toast
-                    message={toastConfig.message}
-                    type={toastConfig.type}
-                    duration={3000}
-                    onClose={() => setShowToast(false)}
-                />
-            )}
-
             <div className="descuentos-header">
                 <div className="descuentos-title">
                     <h2>Gestión de Descuentos</h2>
@@ -196,6 +168,10 @@ export default function DescuentosList() {
                     </div>
                 )}
             </div>
+
+            {message.text && (
+                <StatusMessage type={message.type} message={message.text} />
+            )}
 
             {productos.length === 0 ? (
                 <div className="empty-state">

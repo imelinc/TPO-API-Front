@@ -1,7 +1,12 @@
 import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 
 export default function OrderRow({ order }) {
+    const { user } = useAuth();
+    const token = user?.token;
     const [expanded, setExpanded] = useState(false);
+    const [items, setItems] = useState([]);
+    const [loadingItems, setLoadingItems] = useState(false);
 
     // Elimina la carga de items por API, solo usa order.items
     const formatPrice = (price) => {

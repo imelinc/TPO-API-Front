@@ -1,14 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-// Redux imports
-import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import {
-    register,
-    selectAuthLoading,
-    selectAuthError,
-    selectRegisterSuccess,
-    selectUserRole
-} from "../redux/slices/authSlice";
+import { registerApi } from "../api/auth";
 import "../styles/auth.css";
 
 const initial = {
@@ -18,38 +10,25 @@ const initial = {
 };
 
 export default function Register() {
-    const dispatch = useAppDispatch();
-    const navigate = useNavigate();
-
     const [form, setForm] = useState(initial);
-
-    // Estado de Redux
-    const loading = useAppSelector(selectAuthLoading);
-    const error = useAppSelector(selectAuthError);
-    const registerSuccess = useAppSelector(selectRegisterSuccess);
-    const userRole = useAppSelector(selectUserRole);
-
+    const [msg, setMsg] = useState({ type: "", text: "" });
+    const [loading, setLoading] = useState(false);
+    const navigate = useNavigate();
     const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
-
-    // Redirigir cuando el registro sea exitoso
-    useEffect(() => {
-        if (registerSuccess) {
-            // Redirigir según el rol
-            setTimeout(() => {
-                let redirectTo = "/";
-                if (userRole === "ADMIN") {
-                    redirectTo = "/admin";
-                } else if (userRole === "VENDEDOR") {
-                    redirectTo = "/dashboard";
-                }
-                navigate(redirectTo);
-            }, 900);
-        }
-    }, [registerSuccess, userRole, navigate]);
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        dispatch(register(form));
+        setMsg({ type: "", text: "" });
+        setLoading(true);
+        try {
+            await registerApi(form);
+            setMsg({ type: "success", text: "Cuenta creada. Ya podés iniciar sesión." });
+            setTimeout(() => navigate("/login"), 900);
+        } catch (err) {
+            setMsg({ type: "error", text: err.message || "No se pudo registrar" });
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -66,8 +45,7 @@ export default function Register() {
                     <h2>Crear cuenta</h2>
                     <p className="auth-muted">Completá tus datos para registrarte.</p>
 
-                    {error && <div className="alert error">{error}</div>}
-                    {registerSuccess && <div className="alert success">Cuenta creada. Redirigiendo...</div>}
+                    {msg.text && <div className={`alert ${msg.type}`}>{msg.text}</div>}
 
                     <form onSubmit={onSubmit}>
                         <div className="field"><label>Username</label>

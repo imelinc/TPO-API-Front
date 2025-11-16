@@ -1,96 +1,83 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-// Redux imports
-import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { selectUser } from "../redux/slices/authSlice";
-import {
-    fetchOrders,
-    selectOrders,
-    selectOrdersLoading,
-    selectOrdersError
-} from "../redux/slices/ordersSlice";
+import { useAuth } from "../context/AuthContext";
+import { getUserOrders } from "../api/orders";
 import { getUserId } from "../utils/userUtils";
-import Toast from "../components/common/Toast";
+import StatusMessage from "../components/common/StatusMessage";
 import OrderRow from "../components/orders/OrderRow";
 import "../styles/orders.css";
 
 export default function Orders() {
-    const dispatch = useAppDispatch();
-    const navigate = useNavigate();
-
-    // Toast state
-    const [showToast, setShowToast] = useState(false);
-    const [toastConfig, setToastConfig] = useState({ message: "", type: "success" });
-
-    // Estado de Redux
-    const user = useAppSelector(selectUser);
-    const orders = useAppSelector(selectOrders);
-    const loading = useAppSelector(selectOrdersLoading);
-    const error = useAppSelector(selectOrdersError);
-
+    const { user } = useAuth();
     const token = user?.token;
     const usuarioId = getUserId(user);
 
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
     useEffect(() => {
         if (token && usuarioId) {
-            dispatch(fetchOrders());
+            loadOrders();
         }
-    }, [token, usuarioId, dispatch]);
+    }, [token, usuarioId]);
 
-    // Mostrar errores con Toast
-    useEffect(() => {
-        if (error) {
-            setToastConfig({ message: error, type: "error" });
-            setShowToast(true);
+    const loadOrders = async () => {
+        try {
+            setLoading(true);
+            setError("");
+            const data = await getUserOrders(token, usuarioId);
+            // La función getUserOrders ya extrae el array 'content'
+            setOrders(data);
+        } catch (err) {
+            console.error('Error loading orders:', err);
+            setError(err.message || "Error al cargar las órdenes");
+            setOrders([]);
+        } finally {
+            setLoading(false);
         }
-    }, [error]);
+    };
 
 
 
     if (!user) {
         return (
-            <div className="orders-page">
-                <div className="container">
-                    <div className="alert error">
-                        <strong>Acceso Denegado</strong>
-                        <p>Debes iniciar sesión para ver tus órdenes</p>
-                        <button onClick={() => navigate('/login')}>Iniciar Sesión</button>
-                    </div>
-                </div>
-            </div>
+            <StatusMessage
+                type="error"
+                title="Acceso Denegado"
+                message="Debes iniciar sesión para ver tus órdenes"
+                linkTo="/login"
+                linkText="Iniciar Sesión"
+            />
         );
     }
 
     if (user.rol !== "COMPRADOR" && user.rol !== "ADMIN") {
         return (
-            <div className="orders-page">
-                <div className="container">
-                    <div className="alert error">
-                        <strong>Acceso Denegado</strong>
-                        <p>Solo los compradores pueden ver sus órdenes</p>
-                        <button onClick={() => navigate('/')}>Volver al Inicio</button>
-                    </div>
-                </div>
-            </div>
+            <StatusMessage
+                type="error"
+                title="Acceso Denegado"
+                message="Solo los compradores pueden ver sus órdenes"
+                linkTo="/"
+                linkText="Volver al Inicio"
+            />
         );
     }
 
     return (
         <div className="orders-page">
-            {showToast && (
-                <Toast
-                    message={toastConfig.message}
-                    type={toastConfig.type}
-                    duration={3000}
-                    onClose={() => setShowToast(false)}
-                />
-            )}
-
             <div className="container">
                 <div className="orders-header">
                     <h2>Mis Órdenes</h2>
                     <p className="orders-subtitle">Historial de todas tus compras</p>
                 </div>
+
+
+
+                {error && (
+                    <div className="alert alert--error">
+                        {error}
+                    </div>
+                )}
 
                 <div className="orders-content">
                     {loading ? (

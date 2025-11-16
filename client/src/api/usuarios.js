@@ -43,14 +43,7 @@ export async function promoverUsuario(token, usuarioId) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            const errorMsg = errorData.message || errorData.error || `Error HTTP ${response.status}`;
-            console.error('Error al promover usuario:', response.status, errorData);
-            throw new Error(errorMsg);
-        }
-
-        // Puede retornar 204 No Content o un JSON
-        if (response.status === 204) {
-            return { success: true };
+            throw new Error(errorData.message || "Error al promover usuario");
         }
 
         return await response.json();
@@ -74,14 +67,7 @@ export async function degradarUsuario(token, usuarioId) {
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            const errorMsg = errorData.message || errorData.error || `Error HTTP ${response.status}`;
-            console.error('Error al degradar usuario:', response.status, errorData);
-            throw new Error(errorMsg);
-        }
-
-        // Puede retornar 204 No Content o un JSON
-        if (response.status === 204) {
-            return { success: true };
+            throw new Error(errorData.message || "Error al degradar usuario");
         }
 
         return await response.json();

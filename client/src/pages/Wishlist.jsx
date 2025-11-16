@@ -1,149 +1,199 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// Redux imports
-import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { selectUser } from "../redux/slices/authSlice";
+import { useAuth } from "../context/AuthContext";
+import { useCartWishlist } from "../context/CartWishlistContext";
 import {
-    fetchWishlist,
-    removeFromWishlist,
-    clearAllWishlist,
-    moveAllToCart,
-    selectWishlistItems,
-    selectWishlistLoading,
-    selectMovingToCart,
-    selectWishlistError,
-    selectMoveResult,
-    clearMoveResult,
-} from "../redux/slices/wishlistSlice";
-import { fetchCart } from "../redux/slices/cartSlice";
+    getWishlist,
+    removeWishlistItem,
+    clearWishlist,
+    addAllToCart,
+} from "../api/wishlist";
+import { addItemToCart, createCartIfMissing } from "../api/cart";
+import { getProducto } from "../api/products";
 import WishlistItemRow from "../components/wishlist/wishlistItemRow";
-import Toast from "../components/common/Toast";
+import StatusMessage from "../components/common/StatusMessage";
 import { isBuyer, getUserId } from "../utils/userUtils";
 import "../styles/wishlist.css";
 
 export default function Wishlist() {
-    const dispatch = useAppDispatch();
-    const navigate = useNavigate();
-
-    // Toast state
-    const [showToast, setShowToast] = useState(false);
-    const [toastConfig, setToastConfig] = useState({ message: "", type: "success" });
-
-    // Estado de Redux
-    const user = useAppSelector(selectUser);
-    const enrichedItems = useAppSelector(selectWishlistItems);
-    const loading = useAppSelector(selectWishlistLoading);
-    const movingToCart = useAppSelector(selectMovingToCart);
-    const error = useAppSelector(selectWishlistError);
-    const moveResult = useAppSelector(selectMoveResult);
-
-    // Derivar valores del usuario
+    const { user } = useAuth();
+    const { refreshWishlistCount, refreshCartCount } = useCartWishlist();
     const token = user?.token;
     const usuarioId = getUserId(user);
     const buyer = isBuyer(user);
+    const navigate = useNavigate();
 
-    // Cargar wishlist al montar el componente
-    useEffect(() => {
-        if (token && usuarioId) {
-            dispatch(fetchWishlist());
-        }
-    }, [token, usuarioId, dispatch]);
+    const [wishlist, setWishlist] = useState(null);
+    const [enrichedItems, setEnrichedItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [addingToCart, setAddingToCart] = useState(false);
+    const [msg, setMsg] = useState("");
 
-    // Mostrar errores con Toast
-    useEffect(() => {
-        if (error) {
-            setToastConfig({ message: error, type: "error" });
-            setShowToast(true);
-        }
-    }, [error]);
+    const load = async () => {
+        if (!token || !usuarioId) return;
+        try {
+            setLoading(true);
+            setMsg(""); // Limpiar mensajes previos
 
-    // Mostrar mensaje cuando se complete mover al carrito
-    useEffect(() => {
-        if (moveResult) {
-            const { successCount, failCount } = moveResult;
-            if (successCount > 0) {
-                const message = `${successCount} producto(s) agregado(s) al carrito${failCount > 0 ? ` (${failCount} fallaron)` : ''}`;
-                setToastConfig({ message, type: failCount > 0 ? "warning" : "success" });
-                setShowToast(true);
-                // También refrescar el carrito para actualizar el count
-                dispatch(fetchCart());
+            // Intentar obtener la wishlist (ahora maneja el caso de no existir)
+            const data = await getWishlist(token, usuarioId);
+            setWishlist(data);
+
+            // Enriquecer items con información de productos (imágenes)
+            if (data?.items?.length > 0) {
+                const enriched = await Promise.all(
+                    data.items.map(async (item) => {
+                        try {
+                            const producto = await getProducto(item.productoId);
+                            // Obtener la imagen principal del producto
+                            let imagenUrl = producto.imagenUrl;
+                            if (!imagenUrl && Array.isArray(producto.imagenes) && producto.imagenes.length > 0) {
+                                imagenUrl = producto.imagenes[0].url || producto.imagenes[0].imagenUrl;
+                            }
+                            return { ...item, imagenUrl, imagenes: producto.imagenes };
+                        } catch (error) {
+                            console.error(`Error al cargar producto ${item.productoId}:`, error);
+                            return item; // Devolver item sin enriquecer si falla
+                        }
+                    })
+                );
+                setEnrichedItems(enriched);
+            } else {
+                setEnrichedItems([]);
             }
-            // Limpiar el resultado después de mostrarlo
-            setTimeout(() => {
-                dispatch(clearMoveResult());
-            }, 3000);
+        } catch (e) {
+            setMsg(String(e.message ?? e));
+        } finally {
+            setLoading(false);
         }
-    }, [moveResult, dispatch]);
-
-    const onRemove = (productoId) => {
-        dispatch(removeFromWishlist(productoId));
     };
 
-    const onClear = () => {
-        dispatch(clearAllWishlist());
+    useEffect(() => {
+        if (token && usuarioId) load();
+    }, [token, usuarioId]);
+
+    const onRemove = async (productoId) => {
+        try {
+            const updated = await removeWishlistItem(token, usuarioId, productoId);
+            setWishlist(updated);
+            // Remover el item de enrichedItems
+            setEnrichedItems(prev => prev.filter(item => item.productoId !== productoId));
+            // Refrescar contador
+            await refreshWishlistCount();
+        } catch (e) {
+            setMsg(String(e.message ?? e));
+            load();
+        }
+    };
+
+    const onClear = async () => {
+        try {
+            const updated = await clearWishlist(token, usuarioId);
+            setWishlist(updated);
+            setEnrichedItems([]);
+            setMsg("Wishlist vaciada correctamente");
+            // Refrescar contador
+            await refreshWishlistCount();
+        } catch (e) {
+            setMsg(String(e.message ?? e));
+        }
     };
 
     const onAddAllToCart = async () => {
         if (!enrichedItems.length) {
+            setMsg("No hay productos en la wishlist para agregar");
             return;
         }
 
-        const result = await dispatch(moveAllToCart());
+        try {
+            setAddingToCart(true);
+            setMsg("");
 
-        if (result.type === 'wishlist/moveAllToCart/fulfilled') {
-            // Redirigir al carrito después de mover exitosamente
-            navigate('/cart');
+            // Asegurar que el carrito existe
+            await createCartIfMissing(token, usuarioId);
+
+            // Agregar cada item al carrito
+            let successCount = 0;
+            let failCount = 0;
+
+            // Primero agregar todos al carrito
+            for (const item of enrichedItems) {
+                try {
+                    await addItemToCart(token, usuarioId, {
+                        productoId: item.productoId,
+                        cantidad: 1
+                    });
+                    successCount++;
+                } catch (error) {
+                    console.error(`Error al agregar ${item.productoTitulo}:`, error);
+                    failCount++;
+                }
+            }
+
+            // Si se agregaron algunos productos con éxito, vaciar la wishlist
+            if (successCount > 0) {
+                try {
+                    await clearWishlist(token, usuarioId);
+                    setMsg(`${successCount} producto(s) agregado(s) al carrito y wishlist vaciada${failCount > 0 ? ` (${failCount} fallaron)` : ''}`);
+                    // Refrescar contadores
+                    await refreshCartCount();
+                    await refreshWishlistCount();
+                    navigate('/cart'); // Redirigir al carrito después de agregar los productos
+                } catch (error) {
+                    setMsg(`${successCount} producto(s) agregado(s) al carrito pero no se pudo vaciar la wishlist`);
+                    // Refrescar contador del carrito aunque falle la wishlist
+                    await refreshCartCount();
+                }
+            } else {
+                setMsg("No se pudo agregar ningún producto al carrito");
+            }
+        } catch (e) {
+            setMsg(String(e.message ?? e));
+        } finally {
+            setAddingToCart(false);
         }
     };
 
     if (!token) {
         return (
-            <div className="wishlist-page container">
-                <div className="alert error">
-                    <strong>Acceso Denegado</strong>
-                    <p>Debes iniciar sesión para ver tu lista de deseos</p>
-                    <button onClick={() => navigate('/login')}>Iniciar Sesión</button>
-                </div>
-            </div>
+            <StatusMessage
+                type="error"
+                title="Acceso Denegado"
+                message="Debes iniciar sesión para ver tu lista de deseos"
+                linkTo="/login"
+                linkText="Iniciar Sesión"
+            />
         );
     }
 
     if (!usuarioId) {
         return (
-            <div className="wishlist-page container">
-                <div className="alert error">
-                    <strong>Error de Sesión</strong>
-                    <p>No se detectó tu usuarioId en la sesión</p>
-                    <button onClick={() => navigate('/login')}>Iniciar Sesión</button>
-                </div>
-            </div>
+            <StatusMessage
+                type="error"
+                title="Error de Sesión"
+                message="No se detectó tu usuarioId en la sesión"
+                linkTo="/login"
+                linkText="Iniciar Sesión"
+            />
         );
     }
 
     if (!buyer) {
         return (
-            <div className="wishlist-page container">
-                <div className="alert error">
-                    <strong>Permisos Insuficientes</strong>
-                    <p>Tu cuenta no tiene permisos de comprador</p>
-                    <button onClick={() => navigate('/login')}>Iniciar Sesión</button>
-                </div>
-            </div>
+            <StatusMessage
+                type="error"
+                title="Permisos Insuficientes"
+                message="Tu cuenta no tiene permisos de comprador"
+                linkTo="/login"
+                linkText="Iniciar Sesión"
+            />
         );
     }
 
     return (
         <div className="wishlist-page container">
-            {showToast && (
-                <Toast
-                    message={toastConfig.message}
-                    type={toastConfig.type}
-                    duration={3000}
-                    onClose={() => setShowToast(false)}
-                />
-            )}
-
             <h2>Tu Wishlist</h2>
+            {msg && <div className="alert">{msg}</div>}
 
             <div className="wishlist-container">
                 {loading ? (
@@ -166,9 +216,9 @@ export default function Wishlist() {
                             <button
                                 className="btn btn--primary btn--block"
                                 onClick={onAddAllToCart}
-                                disabled={movingToCart}
+                                disabled={addingToCart}
                             >
-                                {movingToCart ? "Agregando..." : "Agregar todos al carrito"}
+                                {addingToCart ? "Agregando..." : "Agregar todos al carrito"}
                             </button>
                             <button
                                 className="btn btn--ghost btn--block"
