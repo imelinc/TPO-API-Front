@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getAllUsuarios, promoverUsuario, degradarUsuario } from '../../api/usuarios';
+import { getAllUsuarios, promoverUsuario, degradarUsuario, getUsuarioById } from '../../api/usuarios';
 
 // ============== ASYNC THUNKS ==============
 
@@ -77,6 +77,29 @@ export const demoteUser = createAsyncThunk(
   }
 );
 
+/**
+ * Thunk para obtener un usuario por ID
+ * @param {number} usuarioId - ID del usuario
+ */
+export const fetchUsuarioById = createAsyncThunk(
+  'usuarios/fetchUsuarioById',
+  async (usuarioId, { getState, rejectWithValue }) => {
+    const { auth } = getState();
+    const token = auth.user?.token;
+
+    if (!token) {
+      return rejectWithValue('No autenticado');
+    }
+
+    try {
+      const usuario = await getUsuarioById(token, usuarioId);
+      return usuario;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Error al obtener usuario');
+    }
+  }
+);
+
 // ============== SLICE ==============
 
 const usuariosSlice = createSlice({
@@ -120,7 +143,7 @@ const usuariosSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // ========== PROMOTE USER ==========
       .addCase(promoteUser.pending, (state) => {
         state.error = null;
@@ -131,7 +154,7 @@ const usuariosSlice = createSlice({
       .addCase(promoteUser.rejected, (state, action) => {
         state.error = action.payload;
       })
-      
+
       // ========== DEMOTE USER ==========
       .addCase(demoteUser.pending, (state) => {
         state.error = null;

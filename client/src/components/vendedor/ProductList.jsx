@@ -10,7 +10,7 @@ import {
     selectVendedorLoading,
     selectVendedorError,
 } from '../../redux/slices/vendedorSlice';
-import { getUsuarioById } from '../../api/usuarios';
+import { fetchUsuarioById } from '../../redux/slices/usuariosSlice';
 import Toast from '../common/Toast';
 import '../../styles/productList.css';
 
@@ -58,16 +58,24 @@ export default function ProductList() {
             // Obtener IDs únicos de vendedores
             const vendedorIds = [...new Set(productosArray.map(p => p.vendedorId).filter(Boolean))];
 
-            // Cargar información de cada vendedor
+            // Cargar información de cada vendedor usando Redux
             const vendedoresData = {};
             await Promise.all(
                 vendedorIds.map(async (vendedorId) => {
                     try {
-                        const vendedor = await getUsuarioById(user?.token, vendedorId);
-                        vendedoresData[vendedorId] = {
-                            nombre: vendedor.nombre,
-                            apellido: vendedor.apellido
-                        };
+                        const result = await dispatch(fetchUsuarioById(vendedorId));
+                        if (result.type === 'usuarios/fetchUsuarioById/fulfilled') {
+                            const vendedor = result.payload;
+                            vendedoresData[vendedorId] = {
+                                nombre: vendedor.nombre,
+                                apellido: vendedor.apellido
+                            };
+                        } else {
+                            vendedoresData[vendedorId] = {
+                                nombre: 'Vendedor',
+                                apellido: `#${vendedorId}`
+                            };
+                        }
                     } catch (error) {
                         console.error(`Error al cargar vendedor ${vendedorId}:`, error);
                         vendedoresData[vendedorId] = {

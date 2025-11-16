@@ -1,16 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+// Redux imports
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { fetchProductos, selectProducts, selectProductsLoading, selectProductsError } from "../redux/slices/productsSlice";
 import HeroShowcase from "../components/home/HeroShowcase";
 import GameCard from "../components/games/gameCard";
-import { getDisponibles } from "../api/products";
 import "../styles/home.css";
 
 export default function Home() {
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
 
-    const [raw, setRaw] = useState([]);     // Lista cruda de productos
-    const [loading, setLoading] = useState(true);
-    const [err, setErr] = useState("");
+    // Estado de Redux
+    const raw = useAppSelector(selectProducts) || [];
+    const loading = useAppSelector(selectProductsLoading);
+    const err = useAppSelector(selectProductsError);
 
     const [page, setPage] = useState(0);
     const pageSize = 12;
@@ -23,21 +27,12 @@ export default function Home() {
     const [sortBy, setSortBy] = useState("relevancia"); // relevancia|precio|titulo|stock
     const [sortDir, setSortDir] = useState("asc");
 
-    // Fetch inicial
+    // Fetch inicial usando Redux - solo si no hay productos cargados
     useEffect(() => {
-        let alive = true;
-        setLoading(true);
-        setErr("");
-        getDisponibles({ page: 0, size: 200 })
-            .then((data) => {
-                if (!alive) return;
-                const items = Array.isArray(data?.content) ? data.content : [];
-                setRaw(items);
-            })
-            .catch((e) => { if (alive) setErr(e.message || "Error cargando productos"); })
-            .finally(() => { if (alive) setLoading(false); });
-        return () => { alive = false; };
-    }, []);
+        if (raw.length === 0 && !loading) {
+            dispatch(fetchProductos({ page: 0, size: 200 }));
+        }
+    }, []); // Sin dependencias - solo se ejecuta al montar
 
     // cats
     const categorias = useMemo(() => {

@@ -86,11 +86,29 @@ export default function Cart() {
 
     if (!token) {
         return (
-            <div className="cart-page container">
-                <div className="alert error">
-                    <strong>Acceso Denegado</strong>
-                    <p>Debes iniciar sesión para ver tu carrito</p>
-                    <button onClick={() => navigate('/login')}>Iniciar Sesión</button>
+            <div className="cart-page container" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center', maxWidth: '500px', padding: '3rem', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '20px', boxShadow: '0 10px 40px rgba(0,0,0,0.3)' }}>
+                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🛒</div>
+                    <h2 style={{ color: 'white', marginBottom: '1rem', fontSize: '1.8rem' }}>Acceso Denegado</h2>
+                    <p style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '2rem', fontSize: '1.1rem' }}>Debes iniciar sesión para ver tu carrito</p>
+                    <button
+                        onClick={() => navigate('/login')}
+                        style={{
+                            padding: '0.8rem 2rem',
+                            fontSize: '1rem',
+                            fontWeight: 'bold',
+                            background: 'white',
+                            color: '#667eea',
+                            border: 'none',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s'
+                        }}
+                        onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
+                        onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+                    >
+                        Iniciar Sesión
+                    </button>
                 </div>
             </div>
         );
@@ -98,11 +116,29 @@ export default function Cart() {
 
     if (!usuarioId) {
         return (
-            <div className="cart-page container">
-                <div className="alert error">
-                    <strong>Error de Sesión</strong>
-                    <p>No se detectó tu usuarioId en la sesión</p>
-                    <button onClick={() => navigate('/login')}>Iniciar Sesión</button>
+            <div className="cart-page container" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center', maxWidth: '500px', padding: '3rem', background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', borderRadius: '20px', boxShadow: '0 10px 40px rgba(0,0,0,0.3)' }}>
+                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>⚠️</div>
+                    <h2 style={{ color: 'white', marginBottom: '1rem', fontSize: '1.8rem' }}>Error de Sesión</h2>
+                    <p style={{ color: 'rgba(255,255,255,0.9)', marginBottom: '2rem', fontSize: '1.1rem' }}>No se detectó tu usuarioId en la sesión</p>
+                    <button
+                        onClick={() => navigate('/login')}
+                        style={{
+                            padding: '0.8rem 2rem',
+                            fontSize: '1rem',
+                            fontWeight: 'bold',
+                            background: 'white',
+                            color: '#f5576c',
+                            border: 'none',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s'
+                        }}
+                        onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
+                        onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+                    >
+                        Iniciar Sesión
+                    </button>
                 </div>
             </div>
         );
@@ -110,11 +146,29 @@ export default function Cart() {
 
     if (!buyer) {
         return (
-            <div className="cart-page container">
-                <div className="alert error">
-                    <strong>Permisos Insuficientes</strong>
-                    <p>Tu cuenta no tiene permisos de comprador</p>
-                    <button onClick={() => navigate('/login')}>Iniciar Sesión</button>
+            <div className="cart-page container" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center', maxWidth: '500px', padding: '3rem', background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', borderRadius: '20px', boxShadow: '0 10px 40px rgba(0,0,0,0.3)' }}>
+                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🔒</div>
+                    <h2 style={{ color: '#333', marginBottom: '1rem', fontSize: '1.8rem' }}>Permisos Insuficientes</h2>
+                    <p style={{ color: '#555', marginBottom: '2rem', fontSize: '1.1rem' }}>Tu cuenta no tiene permisos de comprador</p>
+                    <button
+                        onClick={() => navigate('/login')}
+                        style={{
+                            padding: '0.8rem 2rem',
+                            fontSize: '1rem',
+                            fontWeight: 'bold',
+                            background: '#333',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s'
+                        }}
+                        onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
+                        onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+                    >
+                        Iniciar Sesión
+                    </button>
                 </div>
             </div>
         );
