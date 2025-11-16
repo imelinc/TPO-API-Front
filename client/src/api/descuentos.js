@@ -11,6 +11,7 @@ async function authenticatedFetch(url, token, options = {}) {
 
     const mergedOptions = {
         ...options,
+        credentials: 'include',
         headers: {
             ...defaultHeaders,
             ...options.headers
@@ -20,8 +21,10 @@ async function authenticatedFetch(url, token, options = {}) {
     const response = await fetch(url, mergedOptions);
 
     if (!response.ok) {
-        const error = await response.text().catch(() => 'Error desconocido');
-        throw new Error(`HTTP ${response.status}: ${error}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = errorData.message || errorData.error || `Error HTTP ${response.status}`;
+        console.error('Error en request:', url, response.status, errorData);
+        throw new Error(errorMsg);
     }
 
     // Para DELETE puede no tener contenido

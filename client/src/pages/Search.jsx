@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { buscarPorTitulo } from "../api/products";
+// Redux imports
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import {
+    searchProductos,
+    selectSearchResults,
+    selectSearchLoading,
+    selectSearchError,
+    clearSearchResults
+} from "../redux/slices/productsSlice";
 import GameCard from "../components/games/gameCard";
 
 function useQuery() {
@@ -9,28 +17,28 @@ function useQuery() {
 }
 
 export default function Search() {
-    const q = useQuery().get("q") || "";
-    const [pageData, setPageData] = useState(null);
-    const [page, setPage] = useState(0);
-    const [loading, setLoading] = useState(false);
-    const [err, setErr] = useState("");
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    
+    const q = useQuery().get("q") || "";
+    const [page, setPage] = useState(0);
+    
+    // Estado de Redux
+    const pageData = useAppSelector(selectSearchResults);
+    const loading = useAppSelector(selectSearchLoading);
+    const err = useAppSelector(selectSearchError);
 
     const size = 12;
 
     useEffect(() => setPage(0), [q]);
 
     useEffect(() => {
-        if (!q) return;
-        let alive = true;
-        setLoading(true);
-        setErr("");
-        buscarPorTitulo({ titulo: q, page, size })
-            .then((data) => { if (alive) setPageData(data); })
-            .catch((e) => { if (alive) setErr(e.message || "Error en la búsqueda"); })
-            .finally(() => { if (alive) setLoading(false); });
-        return () => { alive = false; };
-    }, [q, page]);
+        if (!q) {
+            dispatch(clearSearchResults());
+            return;
+        }
+        dispatch(searchProductos({ titulo: q, page, size }));
+    }, [q, page, dispatch]);
 
     return (
         <section className="games-section">

@@ -1,35 +1,47 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { getProducto } from "../api/products";
-import { useAuth } from "../context/AuthContext";
-import { useCartWishlist } from "../context/CartWishlistContext";
-import { addItemToCart, createCartIfMissing } from "../api/cart";
-import { addItemToWishlist } from "../api/wishlist";
+// Redux imports
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import { selectUser } from "../redux/slices/authSlice";
+import {
+    fetchProductoById,
+    selectCurrentProduct,
+    selectProductLoading,
+    selectProductError,
+    clearCurrentProduct
+} from "../redux/slices/productsSlice";
+import { addToCart, fetchCart } from "../redux/slices/cartSlice";
+import { addToWishlist, fetchWishlist } from "../redux/slices/wishlistSlice";
 import { getUserId } from "../utils/userUtils";
+import Toast from "../components/common/Toast";
 import "../styles/productDetail.css";
 
 export default function ProductDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useAuth();
-    const { refreshCartCount, refreshWishlistCount } = useCartWishlist();
+    const dispatch = useAppDispatch();
 
-    const [data, setData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [err, setErr] = useState("");
+    // Estado de Redux
+    const user = useAppSelector(selectUser);
+    const data = useAppSelector(selectCurrentProduct);
+    const loading = useAppSelector(selectProductLoading);
+    const err = useAppSelector(selectProductError);
+
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [showToast, setShowToast] = useState(false);
+    const [toastConfig, setToastConfig] = useState({
+        message: "",
+        type: "success"
+    });
 
     useEffect(() => {
-        let alive = true;
-        setLoading(true);
-        setErr("");
-        getProducto(id)
-            .then((d) => alive && setData(d))
-            .catch((e) => alive && setErr(e.message || "No se pudo cargar el producto"))
-            .finally(() => alive && setLoading(false));
-        return () => { alive = false; };
-    }, [id]);
+        dispatch(fetchProductoById(id));
+
+        return () => {
+            dispatch(clearCurrentProduct());
+        };
+    }, [id, dispatch]);
 
     // Resetear el índice seleccionado cuando cambie el producto
     useEffect(() => {
@@ -95,36 +107,31 @@ export default function ProductDetail() {
 
         const userId = getUserId(user);
         if (!userId) {
-            alert("No se pudo identificar tu usuario");
+            setToastConfig({ message: "No se pudo identificar tu usuario", type: "error" });
+            setShowToast(true);
             return;
         }
 
-        // Obtener el token de acceso
-        const token = user.token;
-        if (!token) {
-            alert("No se encontró el token de acceso");
-            return;
-        }
+        const precioFinal = tieneDescuento ? precioConDescuento : precio;
 
-        try {
-            // Asegurar que el carrito existe
-            await createCartIfMissing(token, userId);
-            // Agregar el producto con el precio correspondiente
-            const precioFinal = tieneDescuento ? precioConDescuento : precio;
-            await addItemToCart(token, userId, {
-                productoId: id,
-                cantidad: 1,
-                precio: precioFinal // Cambiado a 'precio' para que coincida con la API
-            });
+        const result = await dispatch(addToCart({
+            productoId: id,
+            cantidad: 1,
+            precio: precioFinal
+        }));
 
-            // Refrescar el contador del carrito
-            setTimeout(async () => {
-                await refreshCartCount();
+        if (result.type === 'cart/addToCart/fulfilled') {
+            setTimeout(() => {
+                dispatch(fetchCart());
             }, 300);
-
-            navigate("/cart");
-        } catch (error) {
-            alert("Error al agregar al carrito: " + error.message);
+            setToastConfig({ message: "✓ Producto agregado al carrito", type: "success" });
+            setShowToast(true);
+            setTimeout(() => {
+                navigate("/cart");
+            }, 1000);
+        } else if (result.payload) {
+            setToastConfig({ message: "Error: " + result.payload, type: "error" });
+            setShowToast(true);
         }
     };
 
@@ -133,34 +140,40 @@ export default function ProductDetail() {
 
         const userId = getUserId(user);
         if (!userId) {
-            alert("No se pudo identificar tu usuario");
+            setToastConfig({ message: "No se pudo identificar tu usuario", type: "error" });
+            setShowToast(true);
             return;
         }
 
-        const token = user.token;
-        if (!token) {
-            alert("No se encontró el token de acceso");
-            return;
-        }
+        const result = await dispatch(addToWishlist({
+            productoId: id,
+            productoTitulo: titulo
+        }));
 
-        try {
-            // addItemToWishlist ya maneja la creación automática de la wishlist
-            await addItemToWishlist(token, userId, id);
-
-            // Refrescar el contador de wishlist
-            setTimeout(async () => {
-                await refreshWishlistCount();
+        if (result.type === 'wishlist/addToWishlist/fulfilled') {
+            setTimeout(() => {
+                dispatch(fetchWishlist());
             }, 300);
-
-            alert("Producto agregado a la wishlist");
-        } catch (error) {
-            alert("Error al agregar a la wishlist: " + error.message);
+            setToastConfig({ message: "✓ Producto agregado a la wishlist", type: "success" });
+            setShowToast(true);
+        } else if (result.payload) {
+            setToastConfig({ message: result.payload, type: "error" });
+            setShowToast(true);
         }
     };
     // ----------------------------------------------------
 
     return (
         <section className="pd-wrap">
+            {showToast && (
+                <Toast
+                    message={toastConfig.message}
+                    type={toastConfig.type}
+                    duration={3000}
+                    onClose={() => setShowToast(false)}
+                />
+            )}
+
             <div className="pd-header">
                 <button className="pd-back" onClick={() => navigate(-1)}>Volver</button>
             </div>
@@ -219,28 +232,7 @@ export default function ProductDetail() {
                         <button className="btn-primary" disabled={sinStock} onClick={handleAddToCart}>
                             {sinStock ? "Sin stock" : "Agregar al carrito"}
                         </button>
-                        <button className="btn-outline" onClick={async () => {
-                            if (!user) { goLogin("wishlist"); return; }
-
-                            const userId = getUserId(user);
-                            if (!userId) {
-                                alert("No se pudo identificar tu usuario");
-                                return;
-                            }
-
-                            const token = user.token;
-                            if (!token) {
-                                alert("No se encontró el token de acceso");
-                                return;
-                            }
-
-                            try {
-                                await addItemToWishlist(token, userId, id, titulo);
-                                navigate('/wishlist');
-                            } catch (error) {
-                                alert("Error al agregar a la wishlist: " + error.message);
-                            }
-                        }}>
+                        <button className="btn-outline" onClick={handleAddToWishlist}>
                             Agregar a Wishlist
                         </button>
                     </div>

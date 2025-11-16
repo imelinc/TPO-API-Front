@@ -1,8 +1,9 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAppSelector } from "../redux/hooks";
+import { selectUser } from "../redux/slices/authSlice";
 
 export default function VendedorRoute({ children }) {
-    const { user } = useAuth();
+    const user = useAppSelector(selectUser);
     const location = useLocation();
 
     if (!user) {

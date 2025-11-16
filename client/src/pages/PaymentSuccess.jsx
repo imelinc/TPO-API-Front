@@ -1,23 +1,25 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCartWishlist } from '../context/CartWishlistContext';
+// Redux imports
+import { useAppDispatch } from '../redux/hooks';
+import { fetchCart } from '../redux/slices/cartSlice';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import '../styles/checkout.css';
 
 const PaymentSuccess = () => {
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const { refreshCartCount } = useCartWishlist();
 
     useEffect(() => {
         // Refrescar el contador del carrito al montar el componente
-        refreshCartCount();
+        dispatch(fetchCart());
 
         const timer = setTimeout(() => {
             navigate('/');
         }, 3000);
 
         return () => clearTimeout(timer);
-    }, [navigate, refreshCartCount]);
+    }, [navigate, dispatch]);
 
     return (
         <div className="success-container">

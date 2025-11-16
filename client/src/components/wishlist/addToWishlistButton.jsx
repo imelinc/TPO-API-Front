@@ -1,40 +1,44 @@
-import { useState } from "react";
-import { addItemToWishlist } from "../../api/wishlist";
-import { useAuth } from "../../context/AuthContext";
-import { useCartWishlist } from "../../context/CartWishlistContext";
-import { isBuyer, getUserId } from "../../utils/userUtils";
 import { useNavigate } from "react-router-dom";
+// Redux imports
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { selectUser } from "../../redux/slices/authSlice";
+import { addToWishlist, fetchWishlist, selectAddingToWishlist } from "../../redux/slices/wishlistSlice";
+import { isBuyer, getUserId } from "../../utils/userUtils";
 
 export default function AddToWishlistButton({ productoId, producto, onAdded }) {
-    const { user } = useAuth();
-    const { refreshWishlistCount } = useCartWishlist();
+    const dispatch = useAppDispatch();
+    const navigate = useNavigate();
+    
+    // Estado de Redux
+    const user = useAppSelector(selectUser);
+    const loading = useAppSelector(selectAddingToWishlist);
+    
+    // Derivar valores del usuario
     const token = user?.token;
     const usuarioId = getUserId(user);
     const buyer = isBuyer(user);
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
 
     const handleAdd = async () => {
         if (!token) return alert("Debes iniciar sesión.");
         if (!buyer) return alert("Tu cuenta no tiene permisos de COMPRADOR.");
         if (!usuarioId) return alert("No se detectó tu usuarioId en la sesión.");
 
-        try {
-            setLoading(true);
-            // addItemToWishlist ya maneja la creación automática de la wishlist
-            await addItemToWishlist(token, usuarioId, productoId, producto?.titulo);
+        // Dispatch del thunk de Redux
+        const result = await dispatch(addToWishlist({
+            productoId,
+            productoTitulo: producto?.titulo
+        }));
 
-            // Pequeño delay para asegurar que el backend haya procesado todo
-            setTimeout(async () => {
-                // Refrescar el contador de wishlist
-                await refreshWishlistCount();
+        if (result.type === 'wishlist/addToWishlist/fulfilled') {
+            // Refrescar la wishlist para obtener el count actualizado
+            setTimeout(() => {
+                dispatch(fetchWishlist());
             }, 300);
-
             onAdded?.();
+            // Solo navegar si no hay error y el usuario quiere
             navigate('/wishlist');
-        } catch (e) {
-            const errorMessage = e.message || "Error desconocido";
-
+        } else if (result.type === 'wishlist/addToWishlist/rejected') {
+            const errorMessage = result.payload || 'Error desconocido';
             if (errorMessage.includes("Error interno del servidor")) {
                 alert("⚠️ El servidor está experimentando problemas temporales. Por favor, inténtalo en unos minutos.");
             } else if (errorMessage.includes("Error de conexión")) {
@@ -42,8 +46,6 @@ export default function AddToWishlistButton({ productoId, producto, onAdded }) {
             } else {
                 alert(errorMessage);
             }
-        } finally {
-            setLoading(false);
         }
     };
 

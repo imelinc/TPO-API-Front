@@ -1,45 +1,41 @@
-import { useState } from "react";
-import { addItemToCart, createCartIfMissing } from "../../api/cart";
-import { useAuth } from "../../context/AuthContext";
-import { useCartWishlist } from "../../context/CartWishlistContext";
+// Redux imports
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { selectUser } from "../../redux/slices/authSlice";
+import { addToCart, fetchCart, selectAddingToCart } from "../../redux/slices/cartSlice";
 import { isBuyer, getUserId } from "../../utils/userUtils";
 
 export default function AddToCartButton({ productoId, cantidad = 1, precio, tieneDescuento = false, precioConDescuento, onAdded }) {
-    const { user } = useAuth();
-    const { refreshCartCount } = useCartWishlist();
+    const dispatch = useAppDispatch();
+    
+    // Estado de Redux
+    const user = useAppSelector(selectUser);
+    const loading = useAppSelector(selectAddingToCart);
+    
+    // Derivar valores del usuario
     const token = user?.token;
     const usuarioId = getUserId(user);
     const buyer = isBuyer(user);
-    const [loading, setLoading] = useState(false);
-
-    const precioFinal = tieneDescuento ? precioConDescuento : precio;
 
     const handleAdd = async () => {
         if (!token) return alert("Debes iniciar sesión.");
         if (!buyer) return alert("Tu cuenta no tiene permisos de COMPRADOR.");
         if (!usuarioId) return alert("No se detectó tu usuarioId en la sesión.");
 
-        try {
-            setLoading(true);
-            // Asegurar que el carrito existe antes de agregar items
-            await createCartIfMissing(token, usuarioId);
-            await addItemToCart(token, usuarioId, {
-                productoId,
-                cantidad,
-                precioUnitario: precio
-            });
+        // Dispatch del thunk de Redux
+        const result = await dispatch(addToCart({
+            productoId,
+            cantidad,
+            precio
+        }));
 
-            // Pequeño delay para asegurar que el backend haya procesado todo
-            setTimeout(async () => {
-                // Refrescar el contador del carrito
-                await refreshCartCount();
+        if (result.type === 'cart/addToCart/fulfilled') {
+            // Refrescar el carrito para obtener el count actualizado
+            setTimeout(() => {
+                dispatch(fetchCart());
             }, 300);
-
             onAdded?.();
-        } catch (e) {
-            alert(String(e.message ?? e));
-        } finally {
-            setLoading(false);
+        } else if (result.payload) {
+            alert(result.payload);
         }
     };
 

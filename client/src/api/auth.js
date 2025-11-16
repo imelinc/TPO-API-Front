@@ -1,4 +1,4 @@
-import { AUTH, postJSON, getJSON } from "./client";
+import { AUTH, postJSON, postJSONWithToken, getJSON } from "./client";
 
 // Datos mockeados para desarrollo
 const MOCK_USERS = {
@@ -69,5 +69,5 @@ export const loginApi = async ({ email, password }) => {
 };
 
 export const registerApi = (payload) => postJSON(AUTH.REGISTER, payload);
-export const logoutApi = () => postJSON(AUTH.LOGOUT, {});
+export const logoutApi = (token) => postJSONWithToken(AUTH.LOGOUT, {}, token);
 export const getUserInfo = (token) => getJSON(AUTH.ME, token);

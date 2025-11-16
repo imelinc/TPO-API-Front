@@ -1,16 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+// Redux imports
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { selectUser, logout as logoutAction } from "../../redux/slices/authSlice";
+import { selectCartCount, resetCart } from "../../redux/slices/cartSlice";
+import { selectWishlistCount, resetWishlist } from "../../redux/slices/wishlistSlice";
 import "../../styles/navbar.css";
 import Logo from "../../assets/Logo-big.png";
 
-export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
+export default function Navbar() {
     const [q, setQ] = useState("");
     const [open, setOpen] = useState(false);
     const menuRef = useRef(null);
 
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const dispatch = useAppDispatch();
+    
+    // Leer estado de Redux
+    const user = useAppSelector(selectUser);
+    const cartCount = useAppSelector(selectCartCount);
+    const wishlistCount = useAppSelector(selectWishlistCount);
 
     const onSubmit = (e) => {
         e.preventDefault();
@@ -33,7 +42,11 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
     };
 
     const handleLogout = async () => {
-        await logout();    // llama /auth/logout y limpia el contexto
+        // Limpiar carrito y wishlist antes del logout
+        dispatch(resetCart());
+        dispatch(resetWishlist());
+        // Hacer logout (puede fallar con 500, pero limpiamos localmente)
+        await dispatch(logoutAction());
         setOpen(false);
         navigate("/");
     };
@@ -208,7 +221,11 @@ export default function Navbar({ cartCount = 0, wishlistCount = 0 }) {
                                 <div
                                     className="user-item danger"
                                     onClick={async () => {
-                                        await logout();
+                                        // Limpiar carrito y wishlist antes del logout
+                                        dispatch(resetCart());
+                                        dispatch(resetWishlist());
+                                        // Hacer logout (puede fallar con 500, pero limpiamos localmente)
+                                        await dispatch(logoutAction());
                                         setOpen(false);
                                         window.alert("Sesión cerrada exitosamente.");
                                         navigate("/");

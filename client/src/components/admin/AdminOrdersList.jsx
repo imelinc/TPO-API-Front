@@ -1,60 +1,46 @@
-import { useState, useEffect } from "react";
-import { useAuth } from "../../context/AuthContext";
-import StatusMessage from "../common/StatusMessage";
-
-const API_URL = "http://localhost:8080";
+import { useEffect, useState } from "react";
+// Redux imports
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { selectUser } from "../../redux/slices/authSlice";
+import {
+    fetchAllOrders,
+    toggleExpandedOrder,
+    selectAdminOrders,
+    selectAdminOrdersLoading,
+    selectAdminOrdersError,
+    selectAdminOrdersPagination,
+    selectExpandedOrder,
+} from "../../redux/slices/adminOrdersSlice";
+import Toast from "../common/Toast";
 
 export default function AdminOrdersList() {
-    const { user } = useAuth();
-    const [ordenes, setOrdenes] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [message, setMessage] = useState(null);
-    const [expandedOrder, setExpandedOrder] = useState(null);
-    const [pagination, setPagination] = useState({
-        page: 0,
-        totalPages: 0,
-        totalElements: 0
-    });
+    const dispatch = useAppDispatch();
 
-    const fetchAllOrdenes = async (page = 0) => {
-        try {
-            setLoading(true);
-            const response = await fetch(`${API_URL}/ordenes?page=${page}&size=20`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${user.token}`,
-                },
-                credentials: "include",
-            });
+    // Toast state
+    const [showToast, setShowToast] = useState(false);
+    const [toastConfig, setToastConfig] = useState({ message: "", type: "success" });
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || "Error al cargar órdenes");
-            }
-
-            const data = await response.json();
-            setOrdenes(data.content || []);
-            setPagination({
-                page: data.number,
-                totalPages: data.totalPages,
-                totalElements: data.totalElements
-            });
-        } catch (error) {
-            setMessage({
-                type: "error",
-                text: error.message || "Error al cargar órdenes"
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Estado de Redux
+    const user = useAppSelector(selectUser);
+    const ordenes = useAppSelector(selectAdminOrders);
+    const loading = useAppSelector(selectAdminOrdersLoading);
+    const error = useAppSelector(selectAdminOrdersError);
+    const pagination = useAppSelector(selectAdminOrdersPagination);
+    const expandedOrder = useAppSelector(selectExpandedOrder);
 
     useEffect(() => {
         if (user?.token) {
-            fetchAllOrdenes();
+            dispatch(fetchAllOrders({ page: 0, size: 20 }));
         }
-    }, [user]);
+    }, [user, dispatch]);
+
+    // Mostrar errores con Toast
+    useEffect(() => {
+        if (error) {
+            setToastConfig({ message: error, type: "error" });
+            setShowToast(true);
+        }
+    }, [error]);
 
     const formatFecha = (fecha) => {
         const date = new Date(fecha);
@@ -84,8 +70,8 @@ export default function AdminOrdersList() {
         }
     };
 
-    const toggleOrderDetails = (orderId) => {
-        setExpandedOrder(expandedOrder === orderId ? null : orderId);
+    const handleToggleOrder = (orderId) => {
+        dispatch(toggleExpandedOrder(orderId));
     };
 
     if (loading) {
@@ -94,11 +80,12 @@ export default function AdminOrdersList() {
 
     return (
         <div className="admin-orders-container">
-            {message && (
-                <StatusMessage
-                    type={message.type}
-                    message={message.text}
-                    onClose={() => setMessage(null)}
+            {showToast && (
+                <Toast
+                    message={toastConfig.message}
+                    type={toastConfig.type}
+                    duration={3000}
+                    onClose={() => setShowToast(false)}
                 />
             )}
 
@@ -116,7 +103,7 @@ export default function AdminOrdersList() {
                     <div key={orden.id} className="order-card-admin">
                         <div
                             className="order-header-admin"
-                            onClick={() => toggleOrderDetails(orden.id)}
+                            onClick={() => handleToggleOrder(orden.id)}
                         >
                             <div className="order-info">
                                 <h3>Orden #{orden.id}</h3>
@@ -198,7 +185,7 @@ export default function AdminOrdersList() {
             {pagination.totalPages > 1 && (
                 <div className="pagination">
                     <button
-                        onClick={() => fetchAllOrdenes(pagination.page - 1)}
+                        onClick={() => dispatch(fetchAllOrders({ page: pagination.page - 1, size: 20 }))}
                         disabled={pagination.page === 0}
                         className="pagination-btn"
                     >
@@ -208,7 +195,7 @@ export default function AdminOrdersList() {
                         Página {pagination.page + 1} de {pagination.totalPages}
                     </span>
                     <button
-                        onClick={() => fetchAllOrdenes(pagination.page + 1)}
+                        onClick={() => dispatch(fetchAllOrders({ page: pagination.page + 1, size: 20 }))}
                         disabled={pagination.page >= pagination.totalPages - 1}
                         className="pagination-btn"
                     >
