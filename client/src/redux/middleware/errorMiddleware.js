@@ -1,8 +1,5 @@
 /**
  * Middleware para manejar errores de Redux de forma centralizada
- * Captura todas las acciones que terminan en '/rejected' y las registra
- * 
- * En producción, podrías enviar estos errores a un servicio como Sentry
  */
 const errorMiddleware = (store) => (next) => (action) => {
   // Detectar acciones rechazadas (errores)
