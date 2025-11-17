@@ -14,10 +14,6 @@ const errorMiddleware = (store) => (next) => (action) => {
       error: action.error,
     });
 
-    // Aquí podrías agregar lógica adicional como:
-    // - Enviar a Sentry: Sentry.captureException(action.payload)
-    // - Mostrar notificaciones toast
-    // - Tracking de analytics
   }
 
   // Continuar con el siguiente middleware

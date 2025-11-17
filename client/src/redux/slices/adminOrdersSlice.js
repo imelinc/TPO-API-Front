@@ -97,13 +97,19 @@ const adminOrdersSlice = createSlice({
 
 // ============== ACTIONS ==============
 
+// definimos las acciones creadas en el slice para borrar los errores y manejar la orden expandida
+
 export const { clearAdminOrdersError, setExpandedOrder, toggleExpandedOrder } = adminOrdersSlice.actions;
 
 // ============== REDUCER ==============
 
+// funcion reducer completa que maneja el slice de adminOrders
+
 export default adminOrdersSlice.reducer;
 
 // ============== SELECTORS ==============
+
+// puentes entre los estados de redux y los componentes de React
 
 export const selectAdminOrders = (state) => state.adminOrders.ordenes;
 export const selectAdminOrdersLoading = (state) => state.adminOrders.loading;

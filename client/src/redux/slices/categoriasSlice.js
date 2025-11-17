@@ -138,13 +138,19 @@ const categoriasSlice = createSlice({
 
 // ============== ACTIONS ==============
 
+// definimos las acciones creadas en el slice para borrar los errores y mensajes de éxito
+
 export const { clearCategoriasError, clearCategoriasActionSuccess } = categoriasSlice.actions;
 
 // ============== REDUCER ==============
 
+//funcion reducer completa que maneja el slice de categorias
+
 export default categoriasSlice.reducer;
 
 // ============== SELECTORS ==============
+
+// puentes entre los estados de redux y los componentes de React
 
 export const selectCategorias = (state) => state.categorias.categorias;
 export const selectCategoriasLoading = (state) => state.categorias.loading;

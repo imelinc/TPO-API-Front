@@ -15,18 +15,6 @@ import descuentosReducer from './slices/descuentosSlice';
 
 /**
  * Store de Redux - Configuración centralizada del estado de la aplicación
- * 
- * TODOS los reducers activos - 100% Redux, cero llamadas API desde componentes:
- * - auth: Autenticación (login, register, logout)
- * - products: Productos públicos (lista, búsqueda, detalle)
- * - cart: Carrito de compras (CRUD completo + checkout)
- * - wishlist: Lista de deseos (CRUD completo + mover al carrito)
- * - orders: Órdenes del usuario (lista, detalles, historial)
- * - usuarios: Usuarios (admin - listar, promover, degradar)
- * - adminOrders: Órdenes globales (admin - todas las órdenes del sistema)
- * - vendedor: Productos del vendedor (CRUD + imágenes)
- * - categorias: Categorías (CRUD)
- * - descuentos: Descuentos (CRUD)
  */
 export const store = configureStore({
     reducer: {
